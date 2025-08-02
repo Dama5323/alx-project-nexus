@@ -46,8 +46,9 @@ venv\Scripts\activate     # Windows
 ```
 
 3. **Install dependencies**:
+```
 pip install -r requirements.txt
-
+```
 
 4. **Database setup**
 ```
