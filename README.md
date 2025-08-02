@@ -1,6 +1,12 @@
 # Django E-Commerce Platform
+https://img.shields.io/badge/Django-3.2-green
+https://img.shields.io/badge/Python-3.8+-blue
 
-A modular e-commerce platform built with Django, featuring product catalog, categories, and review system.
+A modular e-commerce platform built with Django, featuring product catalog, user management, and review system.
+
+## Overview
+
+This Django-powered e-commerce backend provides scalable and modular functionality for managing an online store. It supports dynamic product listings, category-based navigation, user-generated reviews, and an extensible admin interface suitable for real-world applications.
 
 ## Features
 
@@ -23,6 +29,49 @@ A modular e-commerce platform built with Django, featuring product catalog, cate
   - Review moderation
   - User rating management
   - Comment previews
+
+  ### 🔐 Authentication & User Management (Accounts App)
+- Custom `User` model with email-based login
+- JWT authentication using `djangorestframework-simplejwt`
+- User registration via API
+- Secure password hashing
+- Optional fields: profile photo, date of birth, created_by
+
+### 📦 Product Management (Products App)
+- Product model with:
+  - Title
+  - Description
+  - Price
+  - Inventory
+  - Slug (for SEO-friendly URLs)
+- Auto slug generation based on product title
+- Product listing & detail views via API
+- Admin support for CRUD
+
+---
+## 🛠️ Tech Stack
+
+- **Backend:** Django & Django REST Framework
+- **Authentication:** JWT via `simplejwt`
+- **Database:** SQLite (default) / PostgreSQL-ready
+- **Language:** Python 3.11+
+- **Environment Management:** `venv`
+
+---
+
+## 🧪 API Endpoints (WIP)
+
+### Authentication
+- `POST /api/auth/register/` – Register a new user
+- `POST /api/auth/register/` – Register a new user
+- `POST /api/token/` – Get access + refresh tokens
+- `POST /api/token/refresh/` – Refresh access token
+
+### Products
+- `GET /api/products/` – List all products
+- `GET /api/products/<slug>/` – Retrieve product detail
+
+---
 
 ## Installation
 ### Prerequisites
