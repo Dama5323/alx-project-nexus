@@ -1,6 +1,6 @@
 # Django E-Commerce Platform
-https://img.shields.io/badge/Django-3.2-green
-https://img.shields.io/badge/Python-3.8+-blue
+- https://img.shields.io/badge/Django-3.2-green
+- https://img.shields.io/badge/Python-3.8+-blue
 
 A modular e-commerce platform built with Django, featuring product catalog, user management, and review system.
 
