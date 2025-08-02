@@ -4,10 +4,21 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import UserSerializer, CustomTokenObtainPairSerializer
 from rest_framework.permissions import AllowAny
 from .serializers import RegisterSerializer
-
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 # Get the custom user model
 User = get_user_model()
+
+@api_view(['GET'])
+def auth_root(request):
+    return Response({
+        'register': request.build_absolute_uri('register/'),
+        'token_obtain': request.build_absolute_uri('token/'),
+        'token_refresh': request.build_absolute_uri('token/refresh/'),
+        'login': request.build_absolute_uri('login/'),
+        'logout': request.build_absolute_uri('logout/'),
+    })
 
 class RegisterView(generics.CreateAPIView):
     """
