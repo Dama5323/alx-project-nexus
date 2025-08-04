@@ -1,34 +1,48 @@
 # Django E-Commerce Platform
 ![Django](https://img.shields.io/badge/Django-3.2-green)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
+![REST](https://img.shields.io/badge/REST_API-Yes-yellow)
 
-A modular e-commerce platform built with Django, featuring product catalog, user management, and review system.
+A modular e-commerce platform built with Django, featuring product catalog, user management, and review system with advanced filtering capabilities.
 
 ## Overview
 
-This Django-powered e-commerce backend provides scalable and modular functionality for managing an online store. It supports dynamic product listings, category-based navigation, user-generated reviews, and an extensible admin interface suitable for real-world applications.
+This Django-powered e-commerce backend provides scalable and modular functionality for managing an online store. The newly enhanced product APIs now support advanced filtering, pagination, and robust admin controls.
 
 ## Features
 
 ### Core Functionality
-- Product catalog management
+- **Enhanced Product Catalog** with filtering/pagination
 - Category organization
 - User review system
 - Admin dashboard with advanced controls
+
+### 🔍 Advanced Product API Features
+- **Filtering** by:
+  - Price range (`min_price`, `max_price`)
+  - Category (`category=electronics`)
+  - Availability (`available=true`)
+  - Search term (`search=laptop`)
+- **Sorting** (`ordering=-price`, `ordering=created_at`)
+- **Pagination** (10 items/page, customizable via `page_size`)
 
 ### Admin Interface Highlights
 - **Category Management**:
   - Create/edit categories with automatic slug generation
   - View product counts per category
   - Inline product management
+
 - **Product Management**:
   - Comprehensive product editing
   - Pricing and inventory control
   - Image uploads
+  - Automatic slug generation
+
 - **Review System**:
   - Review moderation
   - User rating management
   - Comment previews
+  
 
   ### 🔐 Authentication & User Management (Accounts App)
 - Custom `User` model with email-based login
@@ -54,6 +68,8 @@ This Django-powered e-commerce backend provides scalable and modular functionali
 - **Backend:** Django & Django REST Framework
 - **Authentication:** JWT via `simplejwt`
 - **Database:** SQLite (default) / PostgreSQL-ready
+- **Filtering:** Django Filter backend
+- **Pagination:** Django REST Framework pagination
 - **Language:** Python 3.11+
 - **Environment Management:** `venv`
 
@@ -68,8 +84,15 @@ This Django-powered e-commerce backend provides scalable and modular functionali
 - `POST /api/token/refresh/` – Refresh access token
 
 ### Products
-- `GET /api/products/` – List all products
-- `GET /api/products/<slug>/` – Retrieve product detail
+| Endpoint                      | Method | Description                      |
+|-------------------------------|--------|----------------------------------|
+| `/api/products/`              | GET    | List all products (filterable)   |
+| `/api/products/`              | POST   | Create new product               |
+| `/api/products/{slug}/`       | GET    | Product details                  |
+| `/api/products/{slug}/`       | PUT    | Update product                   |
+| `/api/products/{slug}/`       | DELETE | Remove product                   |
+| `/api/products/{slug}/reviews/` | GET    | List product reviews             |
+| `/api/products/{slug}/reviews/` | POST   | Add new review                   |
 
 ---
 
