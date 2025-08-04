@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts.apps.AccountsConfig',
     'products.apps.ProductsConfig',
+    'cart.apps.CartConfig',
+    'orders.apps.OrdersConfig',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -147,16 +149,48 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'products.authentication.CachedJWTAuthentication',  
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  
     ),
-    
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+}
+
+
+# Swagger Settings
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'JWT authentication. Example: "Bearer {token}"'
+        }
+    },
+    'USE_SESSION_AUTH': False,
+    'JSON_EDITOR': True,
+    'LOGOUT_URL': 'rest_framework:logout',
+    'DEFAULT_INFO': 'DjangoCommerce.urls.api_info',  # Point to your API info
+    'DEFAULT_API_URL': 'http://localhost:8000/api/',
+    'DEFAULT_MODEL_RENDERING': 'example',
+    'DOC_EXPANSION': 'list',
+    'SHOW_REQUEST_HEADERS': True,
+    'OPERATIONS_SORTER': 'alpha',
+    'PERSIST_AUTH': True,
+}
+
+# Redoc Settings 
+REDOC_SETTINGS = {
+    'LAZY_RENDERING': True,
+    'HIDE_HOSTNAME': False,
+    'EXPAND_DEFAULT_RESPONSES': True,
+    'PATH_IN_MIDDLE': False,
 }
 
 # CORS settings
@@ -176,3 +210,32 @@ AUTH_USER_MODEL = 'accounts.User'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
+
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+    },
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+# Cache content types for 24 hours
+CONTENT_TYPE_CACHE_TIMEOUT = 60 * 60 * 24

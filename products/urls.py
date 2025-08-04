@@ -1,25 +1,15 @@
-from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (
-    ProductViewSet, 
-    CategoryViewSet,
-    product_detail,
-    product_create,
-    product_update,
-    product_delete
-)
+from .views import ProductViewSet, CategoryViewSet, ReviewViewSet
 
 router = DefaultRouter()
-router.register(r'products', ProductViewSet)
-router.register(r'categories', CategoryViewSet)
+router.register(r'categories', CategoryViewSet, basename='category')
+router.register(r'', ProductViewSet, basename='product')  # Changed from 'products' to ''
 
-urlpatterns = [
-    # API URLs
-    path('api/', include(router.urls)),
-    
-    # Template URLs
-    path('products/<int:pk>/', product_detail, name='product-detail'),
-    path('products/create/', product_create, name='product-create'),
-    path('products/<int:pk>/update/', product_update, name='product-update'),
-    path('products/<int:pk>/delete/', product_delete, name='product-delete'),
-]
+# Nested reviews
+router.register(
+    r'(?P<product_slug>[^/.]+)/reviews', 
+    ReviewViewSet, 
+    basename='product-reviews'
+)
+
+urlpatterns = router.urls

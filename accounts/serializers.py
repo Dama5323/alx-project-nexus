@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from drf_yasg import openapi
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -19,11 +20,24 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'date_of_birth', 'profile_photo', 'created_by', 'is_staff', 'is_active']
-
+        fields = ['id', 'email', 'first_name', 'last_name']
+        
+        # Swagger schema
+        swagger_schema_fields = {
+            'type': openapi.TYPE_OBJECT,
+            'title': "User",
+            'properties': {
+                'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format='email'),
+                'first_name': openapi.Schema(type=openapi.TYPE_STRING),
+                'last_name': openapi.Schema(type=openapi.TYPE_STRING),
+            },
+            'required': ['email']
+        }
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):

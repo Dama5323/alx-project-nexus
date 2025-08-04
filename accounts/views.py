@@ -6,6 +6,11 @@ from rest_framework.permissions import AllowAny
 from .serializers import RegisterSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
+from rest_framework.views import APIView
+from drf_yasg import openapi
+
 
 # Get the custom user model
 User = get_user_model()
@@ -52,3 +57,34 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         Explicitly define queryset for better IDE support.
         """
         return User.objects.all()
+    
+
+class UserRegistrationView(APIView):
+    @swagger_auto_schema(
+        operation_description="Register a new user account",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', 'password', 'password2'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format='email'),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, format='password'),
+                'password2': openapi.Schema(type=openapi.TYPE_STRING, format='password'),
+            },
+        ),
+        responses={
+            status.HTTP_201_CREATED: openapi.Response(
+                description="User created successfully",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'email': openapi.Schema(type=openapi.TYPE_STRING),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            status.HTTP_400_BAD_REQUEST: "Invalid input data",
+        }
+    )
+    def post(self, request):
+        # registration logic here
+        pass
