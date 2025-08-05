@@ -2,12 +2,14 @@
 ![Django](https://img.shields.io/badge/Django-3.2-green)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
 ![REST](https://img.shields.io/badge/REST_API-Yes-yellow)
+![Swagger](https://img.shields.io/badge/Swagger-UI-supported-brightgreen)
 
-A modular e-commerce platform built with Django, featuring product catalog, user management, and review system with advanced filtering capabilities.
+A modular e-commerce platform built with Django, featuring product catalog, user management, cart functionality, order processing, and review system with advanced filtering capabilities.
 
 ## Overview
 
-This Django-powered e-commerce backend provides scalable and modular functionality for managing an online store. The newly enhanced product APIs now support advanced filtering, pagination, and robust admin controls.
+This Django-powered e-commerce backend provides scalable and modular functionality for managing an online store. The newly enhanced product APIs now support advanced filtering, pagination, and robust admin controls. The platform now includes comprehensive API documentation via Swagger UI.
+
 
 ## Features
 
@@ -15,7 +17,11 @@ This Django-powered e-commerce backend provides scalable and modular functionali
 - **Enhanced Product Catalog** with filtering/pagination
 - Category organization
 - User review system
+- Shopping cart functionality
+- Order processing system
 - Admin dashboard with advanced controls
+- **Swagger API Documentation** at `/swagger/`
+
 
 ### 🔍 Advanced Product API Features
 - **Filtering** by:
@@ -38,13 +44,18 @@ This Django-powered e-commerce backend provides scalable and modular functionali
   - Image uploads
   - Automatic slug generation
 
+- **Order Management**:
+  - View and process customer orders
+  - Update order status
+  - Filter orders by date/status
+
 - **Review System**:
   - Review moderation
   - User rating management
   - Comment previews
   
 
-  ### 🔐 Authentication & User Management (Accounts App)
+### 🔐 Authentication & User Management (Accounts App)
 - Custom `User` model with email-based login
 - JWT authentication using `djangorestframework-simplejwt`
 - User registration via API
@@ -62,6 +73,27 @@ This Django-powered e-commerce backend provides scalable and modular functionali
 - Product listing & detail views via API
 - Admin support for CRUD
 
+### 🛒 Cart Functionality (Cart App)
+- Session-based cart system
+- API endpoints for cart management
+- Add/remove items
+- Update quantities
+- Clear cart
+
+### 📦 Order Processing (Order App)
+- Order creation from cart
+- Multiple payment methods
+- Order history for users
+- Status tracking
+- Admin management interface
+
+### 📚 API Documentation (Swagger)
+- Interactive API documentation
+- Endpoint testing interface
+- Schema definition
+- Authentication support
+- Available at `/swagger/` and `/redoc/`
+
 ---
 ## 🛠️ Tech Stack
 
@@ -70,6 +102,7 @@ This Django-powered e-commerce backend provides scalable and modular functionali
 - **Database:** SQLite (default) / PostgreSQL-ready
 - **Filtering:** Django Filter backend
 - **Pagination:** Django REST Framework pagination
+- **API Docs:** drf-yasg (Swagger/OpenAPI)
 - **Language:** Python 3.11+
 - **Environment Management:** `venv`
 
@@ -93,6 +126,30 @@ This Django-powered e-commerce backend provides scalable and modular functionali
 | `/api/products/{slug}/`       | DELETE | Remove product                   |
 | `/api/products/{slug}/reviews/` | GET    | List product reviews             |
 | `/api/products/{slug}/reviews/` | POST   | Add new review                   |
+
+### Cart
+| Endpoint            | Method | Description                     |
+|---------------------|--------|---------------------------------|
+| `/api/cart/`        | GET    | View cart contents              |
+| `/api/cart/`        | POST   | Add item to cart                |
+| `/api/cart/{id}/`   | PUT    | Update cart item quantity       |
+| `/api/cart/{id}/`   | DELETE | Remove item from cart           |
+| `/api/cart/clear/`  | POST   | Empty the cart                  |
+
+
+### Orders
+| Endpoint            | Method | Description                     |
+|---------------------|--------|---------------------------------|
+| `/api/orders/`      | GET    | List user's orders              |
+| `/api/orders/`      | POST   | Create new order from cart      |
+| `/api/orders/{id}/` | GET    | Order details                   |
+| `/api/orders/{id}/` | PUT    | Update order status (admin)     |
+
+### Documentation
+| Endpoint       | Description                     |
+|---------------|---------------------------------|
+| `/swagger/`   | Interactive Swagger UI          |
+| `/redoc/`     | Alternative documentation view  |
 
 ---
 
@@ -174,21 +231,28 @@ Add to settings.py:
 
 #### Products
 **Product Fields**:
-
 - Required: Name, Category, Price, Stock
-
 - Optional: Description, Image
-
 - Automatic: Created/Updated timestamps
 
 #### Reviews
 **Moderation**:
-
 - Filter by rating
-
 - Search by product or user
-
 - View comment previews
+
+### Cart
+**Viewing Carts:**
+- Browse active user carts
+- See cart contents and totals
+- Filter by user or creation date
+
+### Orders
+**Order Management:**
+- View all orders
+- Filter by status or date
+- Update order status
+- View order details
 
 #### Development Notes
 **Models Overview**
@@ -198,6 +262,14 @@ Add to settings.py:
 
 - Review: User feedback system
 
+- Cart: Temporary storage for products
+
+- CartItem: Individual cart entries
+
+- Order: Completed purchases
+
+- OrderItem: Products in orders
+
 **Custom Admin Features**
 - Product count per category
 
@@ -206,6 +278,8 @@ Add to settings.py:
 - Smart form validation
 
 - Organized field sets
+
+- Order status tracking
 
 #### Troubleshooting
 **Common Issues**:
@@ -227,3 +301,11 @@ python manage.py migrate
 - Verify MEDIA settings
 
 - Check directory permissions
+
+4. **Swagger not loading:**
+
+- Check drf-yasg is in installed apps
+
+- Verify URLs are properly configured
+
+- Ensure DEBUG=True during development
