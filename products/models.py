@@ -8,6 +8,7 @@ from django.db.models import Index, UniqueConstraint, Q
 from django.core.cache import cache
 from rest_framework import viewsets
 from rest_framework.response import Response
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
 
@@ -23,11 +24,22 @@ class Category(models.Model):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     
-    def save(self, *args, **kwargs):
-        if not self.slug:
+    def clean(self):
+        if not self.name:
+            raise ValidationError("Name is required")
+        if not self.slug or self.slug == self.old_slug:
             self.slug = slugify(self.name)
+        if Category.objects.filter(slug=self.slug).exclude(id=self.id).exists():
+            raise ValidationError('This slug is already in use.')
+    
+    def save(self, *args, **kwargs):
+        if not self.slug or self.slug == self.old_slug:
+            base_slug = slugify(self.name)
+            self.slug = base_slug
+            counter = 1
             while Category.objects.filter(slug=self.slug).exclude(id=self.id).exists():
-                self.slug = f"{self.slug}-{get_random_string(4)}"
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
         super().save(*args, **kwargs)
     
     def __str__(self):
@@ -40,6 +52,10 @@ class Category(models.Model):
             Index(fields=['name']),
             Index(fields=['slug']),
             Index(fields=['created_at']),
+            Index(fields=['slug'], name='category_slug_idx'),
+        ]
+        constraints = [
+            UniqueConstraint(fields=['slug'], name='unique_category_slug'),
         ]
 
 
@@ -74,12 +90,24 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     slug = models.SlugField(max_length=200, unique=True, blank=True, db_index=True)
+    featured = models.BooleanField(default=False, verbose_name="Featured Product")
 
-    def save(self, *args, **kwargs):
+    def clean(self):
+        if not self.name:
+            raise ValidationError("Name is required")
         if not self.slug:
             self.slug = slugify(self.name)
+        if Product.objects.filter(slug=self.slug).exclude(id=self.id).exists():
+            raise ValidationError('This slug is already in use.')
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            self.slug = base_slug
+            counter = 1
             while Product.objects.filter(slug=self.slug).exclude(id=self.id).exists():
-                self.slug = f"{self.slug}-{get_random_string(4)}"
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
         super().save(*args, **kwargs)
     
     def __str__(self):
@@ -94,14 +122,12 @@ class Product(models.Model):
             ('can_delete_product', 'Can remove products'),
         ]
         indexes = [
-            # Composite indexes for common query patterns
             Index(fields=['name', 'category']),
             Index(fields=['category', 'available']),
             Index(fields=['price', 'available']),
             Index(fields=['-created_at']),
             Index(fields=['stock']),
-            
-            # Conditional indexes (PostgreSQL only)
+            Index(fields=['slug'], name='product_slug_idx'),
             Index(
                 fields=['available'],
                 name='idx_available_products',
@@ -153,12 +179,9 @@ class Review(models.Model):
     class Meta:
         ordering = ['-created_at']
         indexes = [
-            # Composite index for common query patterns
             Index(fields=['product', 'created_at']),
             Index(fields=['product', 'rating']),
             Index(fields=['user', 'created_at']),
-            
-            # Partial index for high ratings
             Index(
                 fields=['rating'],
                 name='idx_high_ratings',
@@ -182,3 +205,32 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
             cache.set(cache_key, categories, timeout=60*15)  # 15 minutes
         serializer = self.get_serializer(categories, many=True)
         return Response(serializer.data)
+    
+class ProductImage(models.Model):
+    product = models.ForeignKey(
+        Product, 
+        on_delete=models.CASCADE,
+        related_name='images'
+    )
+    image = models.ImageField(
+        upload_to='product_images/',
+        verbose_name='Additional Image'
+    )
+    alt_text = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text='Alternative text for accessibility'
+    )
+    is_featured = models.BooleanField(
+        default=False,
+        help_text='Mark as featured image for this product'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-is_featured', 'created_at']
+        verbose_name = 'Product Image'
+        verbose_name_plural = 'Product Images'
+
+    def __str__(self):
+        return f"Image for {self.product.name}"

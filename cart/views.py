@@ -7,6 +7,13 @@ from .serializers import CartSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.shortcuts import get_object_or_404
+from django.shortcuts import render
+
+
+def cart_view(request):
+    """Traditional Django view for cart"""
+    cart = Cart.objects.get_or_create(user=request.user)[0]
+    return render(request, 'cart/view.html', {'cart': cart})
 
 class CartViewSet(viewsets.ModelViewSet):
     """

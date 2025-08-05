@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from .views import OrderViewSet
 
+app_name = 'orders' 
 
 # Traditional URLs
 urlpatterns = [

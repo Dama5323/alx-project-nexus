@@ -1,3 +1,4 @@
+from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
@@ -8,6 +9,29 @@ from .models import Product, Category, Review
 from .serializers import ProductSerializer, CategorySerializer, ReviewSerializer
 from .filters import ProductFilter
 from django.db.models import Prefetch
+from products.models import Product
+from django.views.generic import ListView
+from django.views.generic import DetailView
+
+def home_view(request):
+    try:
+        products = Product.objects.all()[:8]
+        featured_products = Product.objects.filter(featured=True)[:4]
+        
+        context = {
+            'products': products,
+            'featured_products': featured_products,
+            'debug': 'View is executing'  
+        }
+        print(f"DEBUG: Found {len(products)} products")
+        return render(request, 'djacommerce/home.html', context)
+        
+    except Exception as e:
+        print(f"ERROR in home_view: {str(e)}")
+        # Fallback context if something fails
+        return render(request, 'djacommerce/home.html', {
+            'debug': f"Error: {str(e)}"
+        })
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -107,3 +131,20 @@ class ReviewViewSet(viewsets.ModelViewSet):
         product = get_object_or_404(Product.objects.only('id'), 
                                  slug=self.kwargs['product_slug'])
         serializer.save(product=product, user=self.request.user)
+
+class ProductListView(ListView):
+    """Regular Django view for HTML product listing"""
+    model = Product
+    template_name = 'products/product_list.html'  # You'll need to create this template
+    context_object_name = 'products'
+    paginate_by = 12
+
+    def get_queryset(self):
+        return Product.objects.all().order_by('-created_at')
+
+class ProductDetailView(DetailView):
+    model = Product
+    template_name = 'products/product_detail.html'
+    context_object_name = 'product'
+    slug_field = 'slug'
+    slug_url_kwarg = 'slug'
