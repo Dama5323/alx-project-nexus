@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
-    'drf_yasg',
+    'drf_spectacular',
     'django_filters',
 ]
 
@@ -176,9 +176,33 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'E-Commerce API Documentation',
+    'DESCRIPTION': """
+    ## API Usage Guide
+    
+    ### Cart Endpoints
+    - **Add Item**: POST `/api/cart/add-item/`
+    - **Remove Item**: POST `/api/cart/remove-item/`
+    - **Clear Cart**: DELETE `/api/cart/clear/`
+    - **View Cart**: GET `/api/cart/`
+    
+    ### Authentication
+    All endpoints require JWT authentication. Include your token in the header:
+    `Authorization: Bearer <your_token>`
+    """,
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+    },
+    'SCHEMA_PATH_PREFIX': r'/api/',
+}
 
 # Swagger Settings
 SWAGGER_SETTINGS = {

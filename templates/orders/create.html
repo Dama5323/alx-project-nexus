@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Create New Order</h2>
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            {{ form.shipping_address.label_tag }}
+            {{ form.shipping_address }}
+            {% if form.shipping_address.errors %}
+                <div class="text-danger">{{ form.shipping_address.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="same_as_shipping">
+            <label class="form-check-label" for="same_as_shipping">
+                Same as shipping address
+            </label>
+        </div>
+        
+        <div class="mb-3">
+            {{ form.billing_address.label_tag }}
+            {{ form.billing_address }}
+            {% if form.billing_address.errors %}
+                <div class="text-danger">{{ form.billing_address.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.payment_method.label_tag }}
+            {{ form.payment_method }}
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Place Order</button>
+    </form>
+</div>
+
+<script>
+// Simple JS to copy shipping address to billing address
+document.getElementById('same_as_shipping').addEventListener('change', function() {
+    if (this.checked) {
+        document.getElementById('{{ form.billing_address.id_for_label }}').value = 
+            document.getElementById('{{ form.shipping_address.id_for_label }}').value;
+    }
+});
+</script>
+{% endblock %}

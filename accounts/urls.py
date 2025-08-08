@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path
 from django.contrib.auth.views import LogoutView
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
@@ -9,20 +9,20 @@ from .views import (
     RegisterAPIView,
     ProfileAPIView,
     api_root,
+    UserDetailView,
 )
 
 urlpatterns = [
-    # Template Views
+    # Template Views (for web browser access)
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     path('register/', register_view, name='register'),
     
-    # API Views
-    path('api/', include([
-        path('', api_root, name='api-root'),
-        path('register/', RegisterAPIView.as_view(), name='register'),
-        path('token/', CustomTokenObtainPairView.as_view(), name='token-obtain'),
-        path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
-        path('profile/', ProfileAPIView.as_view(), name='profile'),
-    ])),
+    # API Views (for programmatic access)
+    path('', api_root, name='api-root'),
+    path('auth/register/', RegisterAPIView.as_view(), name='auth-register'),
+    path('auth/token/', CustomTokenObtainPairView.as_view(), name='auth-token'),
+    path('auth/token/refresh/', TokenRefreshView.as_view(), name='auth-token-refresh'),
+    path('users/me/', UserDetailView.as_view(), name='user-detail'),
+    path('users/profile/', ProfileAPIView.as_view(), name='user-profile'),
 ]

@@ -20,13 +20,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'first_name', 'last_name']
         
-        # Swagger schema
         swagger_schema_fields = {
             'type': openapi.TYPE_OBJECT,
             'title': "User",
@@ -38,6 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
             },
             'required': ['email']
         }
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):

@@ -1,0 +1,2039 @@
+openapi: 3.0.3
+info:
+  title: E-Commerce API Documentation
+  version: 1.0.0
+  description: "\n    ## API Usage Guide\n    \n    ### Cart Endpoints\n    - **Add\
+    \ Item**: POST `/api/cart/add-item/`\n    - **Remove Item**: POST `/api/cart/remove-item/`\n\
+    \    - **Clear Cart**: DELETE `/api/cart/clear/`\n    - **View Cart**: GET `/api/cart/`\n\
+    \    \n    ### Authentication\n    All endpoints require JWT authentication. Include\
+    \ your token in the header:\n    `Authorization: Bearer <your_token>`\n    "
+paths:
+  /accounts/:
+    get:
+      operationId: accounts_retrieve
+      tags:
+      - accounts
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /accounts/auth/register/:
+    post:
+      operationId: accounts_auth_register_create
+      tags:
+      - accounts
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /accounts/auth/token/:
+    post:
+      operationId: accounts_auth_token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomTokenObtainPair'
+          description: ''
+  /accounts/auth/token/refresh/:
+    post:
+      operationId: accounts_auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /accounts/users/me/:
+    get:
+      operationId: accounts_users_me_retrieve
+      tags:
+      - accounts
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /accounts/users/profile/:
+    get:
+      operationId: accounts_users_profile_retrieve
+      tags:
+      - accounts
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: accounts_users_profile_update
+      tags:
+      - accounts
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /cart/:
+    get:
+      operationId: cart_list
+      description: Retrieves all items in the authenticated user's cart
+      summary: Get cart contents
+      tags:
+      - cart
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cart'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+  /cart/add-item/:
+    post:
+      operationId: cart_add_item_create
+      description: Add item to cart with quantity validation
+      tags:
+      - cart
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+            examples:
+              ExampleRequest:
+                value:
+                  product_id: 1
+                  quantity: 2
+                summary: Example Request
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+          description: ''
+  /cart/add/{product_id}/:
+    post:
+      operationId: cart_add_create
+      description: Add item to cart with quantity validation
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - cart
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+            examples:
+              ExampleRequest:
+                value:
+                  product_id: 1
+                  quantity: 2
+                summary: Example Request
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+          description: ''
+  /cart/api/add-item/:
+    post:
+      operationId: cart_api_add_item_create
+      description: Add item to cart with quantity validation
+      tags:
+      - cart
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+            examples:
+              ExampleRequest:
+                value:
+                  product_id: 1
+                  quantity: 2
+                summary: Example Request
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+          description: ''
+  /cart/api/clear/:
+    delete:
+      operationId: cart_api_clear_destroy
+      description: Completely empty the cart
+      tags:
+      - cart
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /cart/api/remove-item/:
+    post:
+      operationId: cart_api_remove_item_create
+      description: Remove item from cart or reduce quantity
+      tags:
+      - cart
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+            examples:
+              AddItemExample:
+                value:
+                  product_id: 42
+                  quantity: 2
+                summary: Add Item Example
+                description: Example request for adding an item to cart
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+          description: ''
+  /cart/api/summary/:
+    get:
+      operationId: cart_api_summary_retrieve
+      description: "\n        Adds a product to the cart or updates quantity if already\
+        \ present.\n        \n        Example:\n        ```json\n        {\n     \
+        \       \"product_id\": 42,\n            \"quantity\": 2\n          }\n  \
+        \      ```\n        "
+      summary: Add item to cart
+      tags:
+      - cart
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+  /cart/clear/:
+    delete:
+      operationId: cart_clear_destroy
+      description: Completely empty the cart
+      tags:
+      - cart
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /cart/remove-item/:
+    post:
+      operationId: cart_remove_item_create
+      description: Remove item from cart or reduce quantity
+      tags:
+      - cart
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+            examples:
+              AddItemExample:
+                value:
+                  product_id: 42
+                  quantity: 2
+                summary: Add Item Example
+                description: Example request for adding an item to cart
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CartItemAction'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+          description: ''
+  /cart/summary/:
+    get:
+      operationId: cart_summary_retrieve
+      description: "\n        Adds a product to the cart or updates quantity if already\
+        \ present.\n        \n        Example:\n        ```json\n        {\n     \
+        \       \"product_id\": 42,\n            \"quantity\": 2\n          }\n  \
+        \      ```\n        "
+      summary: Add item to cart
+      tags:
+      - cart
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+  /orders/:
+    get:
+      operationId: orders_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - orders
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderList'
+          description: ''
+    post:
+      operationId: orders_create
+      tags:
+      - orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Order'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Order'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /orders/{id}/:
+    get:
+      operationId: orders_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - orders
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    put:
+      operationId: orders_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Order'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Order'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    patch:
+      operationId: orders_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrder'
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    delete:
+      operationId: orders_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - orders
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /orders/{id}/cancel/:
+    post:
+      operationId: orders_cancel_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Order'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Order'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /orders/{id}/pay/:
+    post:
+      operationId: orders_pay_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Order'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Order'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /orders/api/orders/{id}/transitions/:
+    get:
+      operationId: orders_api_orders_transitions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - orders
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /products/categories/:
+    get:
+      operationId: products_categories_list
+      description: API endpoint for product categories
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - products
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryList'
+              examples:
+                CategoryExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - id: 1
+                      name: Electronics
+                      slug: electronics
+                      description: All electronic devices
+                  summary: Category Example
+          description: ''
+  /products/categories/{slug}/:
+    get:
+      operationId: products_categories_retrieve
+      description: API endpoint for product categories
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+              examples:
+                CategoryExample:
+                  value:
+                    id: 1
+                    name: Electronics
+                    slug: electronics
+                    description: All electronic devices
+                  summary: Category Example
+          description: ''
+  /products/products/:
+    get:
+      operationId: products_products_list
+      description: |-
+        API endpoint for products with:
+        - Advanced filtering
+        - Dual lookup (ID and slug)
+        - Cached statistics
+      parameters:
+      - in: query
+        name: available
+        schema:
+          type: boolean
+      - in: query
+        name: category
+        schema:
+          type: string
+        description: Filter by category slug
+      - in: query
+        name: max_price
+        schema:
+          type: number
+      - in: query
+        name: min_price
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Search query
+      tags:
+      - products
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductList'
+              examples:
+                ProductResponseExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - id: 1
+                      name: Smartphone X
+                      description: Latest smartphone model
+                      price: '999.99'
+                      category:
+                        id: 1
+                        name: Electronics
+                        slug: electronics
+                      stock: 100
+                      available: true
+                      created_by: admin
+                      created_at: '2023-01-01T12:00:00Z'
+                      image: /media/products/smartphone_x.jpg
+                      slug: smartphone-x
+                      reviews: []
+                  summary: Product Response Example
+          description: ''
+    post:
+      operationId: products_products_create
+      description: |-
+        API endpoint for products with:
+        - Advanced filtering
+        - Dual lookup (ID and slug)
+        - Cached statistics
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+            examples:
+              ProductCreateExample:
+                value:
+                  name: Smartphone X
+                  description: Latest smartphone model
+                  price: 999.99
+                  category_id: 1
+                  stock: 100
+                  available: true
+                summary: Product Create Example
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Product'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Product'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                ProductResponseExample:
+                  value:
+                    id: 1
+                    name: Smartphone X
+                    description: Latest smartphone model
+                    price: '999.99'
+                    category:
+                      id: 1
+                      name: Electronics
+                      slug: electronics
+                    stock: 100
+                    available: true
+                    created_by: admin
+                    created_at: '2023-01-01T12:00:00Z'
+                    image: /media/products/smartphone_x.jpg
+                    slug: smartphone-x
+                    reviews: []
+                  summary: Product Response Example
+          description: ''
+  /products/products/{product_slug}/reviews/:
+    get:
+      operationId: products_products_reviews_list
+      description: API endpoint for product reviews with owner permissions
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: product_slug
+        schema:
+          type: string
+        required: true
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - products
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedReviewList'
+              examples:
+                ReviewExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - id: 1
+                      rating: 5
+                      comment: Excellent product!
+                      created_at: '2023-01-01T12:00:00Z'
+                  summary: Review Example
+          description: ''
+    post:
+      operationId: products_products_reviews_create
+      description: API endpoint for product reviews with owner permissions
+      parameters:
+      - in: path
+        name: product_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Review'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Review'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+              examples:
+                ReviewExample:
+                  value:
+                    id: 1
+                    rating: 5
+                    comment: Excellent product!
+                    created_at: '2023-01-01T12:00:00Z'
+                  summary: Review Example
+          description: ''
+  /products/products/{product_slug}/reviews/{id}/:
+    get:
+      operationId: products_products_reviews_retrieve
+      description: API endpoint for product reviews with owner permissions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: product_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+              examples:
+                ReviewExample:
+                  value:
+                    id: 1
+                    rating: 5
+                    comment: Excellent product!
+                    created_at: '2023-01-01T12:00:00Z'
+                  summary: Review Example
+          description: ''
+    put:
+      operationId: products_products_reviews_update
+      description: API endpoint for product reviews with owner permissions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: product_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Review'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Review'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+              examples:
+                ReviewExample:
+                  value:
+                    id: 1
+                    rating: 5
+                    comment: Excellent product!
+                    created_at: '2023-01-01T12:00:00Z'
+                  summary: Review Example
+          description: ''
+    patch:
+      operationId: products_products_reviews_partial_update
+      description: API endpoint for product reviews with owner permissions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: product_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReview'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedReview'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedReview'
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+              examples:
+                ReviewExample:
+                  value:
+                    id: 1
+                    rating: 5
+                    comment: Excellent product!
+                    created_at: '2023-01-01T12:00:00Z'
+                  summary: Review Example
+          description: ''
+    delete:
+      operationId: products_products_reviews_destroy
+      description: API endpoint for product reviews with owner permissions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: product_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /products/products/{slug}/:
+    get:
+      operationId: products_products_retrieve
+      description: |-
+        API endpoint for products with:
+        - Advanced filtering
+        - Dual lookup (ID and slug)
+        - Cached statistics
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                ProductResponseExample:
+                  value:
+                    id: 1
+                    name: Smartphone X
+                    description: Latest smartphone model
+                    price: '999.99'
+                    category:
+                      id: 1
+                      name: Electronics
+                      slug: electronics
+                    stock: 100
+                    available: true
+                    created_by: admin
+                    created_at: '2023-01-01T12:00:00Z'
+                    image: /media/products/smartphone_x.jpg
+                    slug: smartphone-x
+                    reviews: []
+                  summary: Product Response Example
+          description: ''
+    put:
+      operationId: products_products_update
+      description: |-
+        API endpoint for products with:
+        - Advanced filtering
+        - Dual lookup (ID and slug)
+        - Cached statistics
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+            examples:
+              ProductCreateExample:
+                value:
+                  name: Smartphone X
+                  description: Latest smartphone model
+                  price: 999.99
+                  category_id: 1
+                  stock: 100
+                  available: true
+                summary: Product Create Example
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Product'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Product'
+        required: true
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                ProductResponseExample:
+                  value:
+                    id: 1
+                    name: Smartphone X
+                    description: Latest smartphone model
+                    price: '999.99'
+                    category:
+                      id: 1
+                      name: Electronics
+                      slug: electronics
+                    stock: 100
+                    available: true
+                    created_by: admin
+                    created_at: '2023-01-01T12:00:00Z'
+                    image: /media/products/smartphone_x.jpg
+                    slug: smartphone-x
+                    reviews: []
+                  summary: Product Response Example
+          description: ''
+    patch:
+      operationId: products_products_partial_update
+      description: |-
+        API endpoint for products with:
+        - Advanced filtering
+        - Dual lookup (ID and slug)
+        - Cached statistics
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProduct'
+            examples:
+              ProductCreateExample:
+                value:
+                  name: Smartphone X
+                  description: Latest smartphone model
+                  price: 999.99
+                  category_id: 1
+                  stock: 100
+                  available: true
+                summary: Product Create Example
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProduct'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProduct'
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                ProductResponseExample:
+                  value:
+                    id: 1
+                    name: Smartphone X
+                    description: Latest smartphone model
+                    price: '999.99'
+                    category:
+                      id: 1
+                      name: Electronics
+                      slug: electronics
+                    stock: 100
+                    available: true
+                    created_by: admin
+                    created_at: '2023-01-01T12:00:00Z'
+                    image: /media/products/smartphone_x.jpg
+                    slug: smartphone-x
+                    reviews: []
+                  summary: Product Response Example
+          description: ''
+    delete:
+      operationId: products_products_destroy
+      description: |-
+        API endpoint for products with:
+        - Advanced filtering
+        - Dual lookup (ID and slug)
+        - Cached statistics
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /products/products/{slug}/stats/:
+    get:
+      operationId: products_products_stats_retrieve
+      description: Cached product statistics endpoint
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - products
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                ProductResponseExample:
+                  value:
+                    id: 1
+                    name: Smartphone X
+                    description: Latest smartphone model
+                    price: '999.99'
+                    category:
+                      id: 1
+                      name: Electronics
+                      slug: electronics
+                    stock: 100
+                    available: true
+                    created_by: admin
+                    created_at: '2023-01-01T12:00:00Z'
+                    image: /media/products/smartphone_x.jpg
+                    slug: smartphone-x
+                    reviews: []
+                  summary: Product Response Example
+          description: ''
+  /products/products/by-id/{id}/:
+    get:
+      operationId: products_products_by_id_retrieve
+      description: |-
+        API endpoint for products with:
+        - Advanced filtering
+        - Dual lookup (ID and slug)
+        - Cached statistics
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - products
+      security:
+      - JWT Auth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                ProductResponseExample:
+                  value:
+                    id: 1
+                    name: Smartphone X
+                    description: Latest smartphone model
+                    price: '999.99'
+                    category:
+                      id: 1
+                      name: Electronics
+                      slug: electronics
+                    stock: 100
+                    available: true
+                    created_by: admin
+                    created_at: '2023-01-01T12:00:00Z'
+                    image: /media/products/smartphone_x.jpg
+                    slug: smartphone-x
+                    reviews: []
+                  summary: Product Response Example
+          description: ''
+components:
+  schemas:
+    Cart:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+          readOnly: true
+        total_items:
+          type: string
+          readOnly: true
+        total_price:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - items
+      - total_items
+      - total_price
+      - updated_at
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        product:
+          allOf:
+          - $ref: '#/components/schemas/Product'
+          readOnly: true
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+        added_at:
+          type: string
+          format: date-time
+          readOnly: true
+        price_at_addition:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        subtotal:
+          type: string
+          readOnly: true
+      required:
+      - added_at
+      - id
+      - price_at_addition
+      - product
+      - subtotal
+    CartItemAction:
+      type: object
+      properties:
+        product_id:
+          type: integer
+          description: ID of the product to add/remove
+        quantity:
+          type: integer
+          minimum: 1
+          description: Number of items to add/remove
+      required:
+      - product_id
+      - quantity
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          nullable: true
+      required:
+      - id
+      - name
+      - slug
+    CustomTokenObtainPair:
+      type: object
+      properties:
+        email:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        payment_method_display:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethodEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Created Date
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Last Updated
+        payment_date:
+          type: string
+          format: date-time
+          nullable: true
+        shipping_date:
+          type: string
+          format: date-time
+          nullable: true
+        total_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Total Amount
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        shipping_address: {}
+        billing_address: {}
+        tracking_number:
+          type: string
+          maxLength: 100
+        notes:
+          type: string
+          title: Internal Notes
+        user:
+          type: integer
+          title: Customer
+      required:
+      - created_at
+      - id
+      - items
+      - payment_method_display
+      - status_display
+      - updated_at
+      - user
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        product:
+          allOf:
+          - $ref: '#/components/schemas/Product'
+          readOnly: true
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Unit Price
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+        product_name:
+          type: string
+          title: Product Name (Snapshot)
+          maxLength: 255
+        product_sku:
+          type: string
+          title: Product SKU (Snapshot)
+          maxLength: 50
+        subtotal:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - price
+      - product
+      - subtotal
+    PaginatedCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+    PaginatedOrderList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+    PaginatedProductList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+    PaginatedReviewList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+    PatchedOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        payment_method_display:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethodEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Created Date
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Last Updated
+        payment_date:
+          type: string
+          format: date-time
+          nullable: true
+        shipping_date:
+          type: string
+          format: date-time
+          nullable: true
+        total_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Total Amount
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        shipping_address: {}
+        billing_address: {}
+        tracking_number:
+          type: string
+          maxLength: 100
+        notes:
+          type: string
+          title: Internal Notes
+        user:
+          type: integer
+          title: Customer
+    PatchedProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Product price in decimal format (e.g. 19.99)
+        category:
+          allOf:
+          - $ref: '#/components/schemas/Category'
+          readOnly: true
+        category_id:
+          type: integer
+          writeOnly: true
+          description: ID of the product category
+        stock:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Available quantity in inventory
+        available:
+          type: boolean
+        created_by:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        image:
+          type: string
+          format: uri
+          nullable: true
+          description: Product image file upload
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+          readOnly: true
+    PatchedReview:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: string
+          readOnly: true
+        rating:
+          allOf:
+          - $ref: '#/components/schemas/RatingEnum'
+          minimum: 0
+          maximum: 2147483647
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PaymentMethodEnum:
+      enum:
+      - CC
+      - PP
+      - COD
+      - BT
+      - WLT
+      type: string
+      description: |-
+        * `CC` - Credit Card
+        * `PP` - PayPal
+        * `COD` - Cash on Delivery
+        * `BT` - Bank Transfer
+        * `WLT` - Digital Wallet
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Product price in decimal format (e.g. 19.99)
+        category:
+          allOf:
+          - $ref: '#/components/schemas/Category'
+          readOnly: true
+        category_id:
+          type: integer
+          writeOnly: true
+          description: ID of the product category
+        stock:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Available quantity in inventory
+        available:
+          type: boolean
+        created_by:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        image:
+          type: string
+          format: uri
+          nullable: true
+          description: Product image file upload
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+          readOnly: true
+      required:
+      - category
+      - created_at
+      - created_by
+      - description
+      - id
+      - name
+      - price
+      - reviews
+      - slug
+      - updated_at
+    RatingEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      type: integer
+      description: |-
+        * `1` - 1 - Poor
+        * `2` - 2 - Fair
+        * `3` - 3 - Good
+        * `4` - 4 - Very Good
+        * `5` - 5 - Excellent
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: string
+          readOnly: true
+        rating:
+          allOf:
+          - $ref: '#/components/schemas/RatingEnum'
+          minimum: 0
+          maximum: 2147483647
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - comment
+      - created_at
+      - id
+      - rating
+      - user
+    StatusEnum:
+      enum:
+      - PENDING
+      - PAID
+      - PROCESSING
+      - SHIPPED
+      - DELIVERED
+      - CANCELLED
+      - REFUNDED
+      - FAILED
+      type: string
+      description: |-
+        * `PENDING` - Pending
+        * `PAID` - Paid
+        * `PROCESSING` - Processing
+        * `SHIPPED` - Shipped
+        * `DELIVERED` - Delivered
+        * `CANCELLED` - Cancelled
+        * `REFUNDED` - Refunded
+        * `FAILED` - Payment Failed
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+  securitySchemes:
+    JWT Auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

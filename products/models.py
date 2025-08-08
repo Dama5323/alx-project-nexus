@@ -9,6 +9,9 @@ from django.core.cache import cache
 from rest_framework import viewsets
 from rest_framework.response import Response
 from django.core.exceptions import ValidationError
+from django.db.models import Avg, Count
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 User = get_user_model()
 
@@ -112,6 +115,16 @@ class Product(models.Model):
     
     def __str__(self):
         return self.name
+    
+    @property
+    def average_rating(self):
+        """Calculate average product rating"""
+        return self.reviews.aggregate(average=Avg('rating'))['average'] or 0
+
+    @property
+    def review_count(self):
+        """Count number of reviews"""
+        return self.reviews.count()
 
     class Meta:
         ordering = ['-created_at']
@@ -234,3 +247,14 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name}"
+
+@receiver(pre_save, sender=Product)
+def product_pre_save(sender, instance, **kwargs):
+    """Auto-generate slug for products"""
+    if not instance.slug:
+        base_slug = slugify(instance.name)
+        instance.slug = base_slug
+        counter = 1
+        while Product.objects.filter(slug=instance.slug).exclude(id=instance.id).exists():
+            instance.slug = f"{base_slug}-{counter}"
+            counter += 1

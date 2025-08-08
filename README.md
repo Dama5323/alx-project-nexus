@@ -3,12 +3,47 @@
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
 ![REST](https://img.shields.io/badge/REST_API-Yes-yellow)
 ![Swagger](https://img.shields.io/badge/Swagger-UI-supported-brightgreen)
+![Docker](https://img.shields.io/badge/Docker-Containerized-blue)
+![Celery](https://img.shields.io/badge/Celery-RabbitMQ-green)
+
+
+
+## 📋 Table of Contents
+1. [Features Overview](#-features-overview)
+2. [API Documentation](#-api-documentation)
+   - [Authentication](#authentication)
+   - [Products](#products)
+   - [Cart](#cart)
+   - [Orders](#orders)
+3. [Swagger Usage](#swagger-usage)
+4. [Docker Containerization](#docker-containerization)
+5. [Celery & RabbitMQ](#celery--rabbitmq)
+6. [Admin Guide](#-admin-guide)
+7. [Installation](#-installation)
+8. [Configuration](#configuration)
+9. [Development Notes](#-development-notes)
 
 A modular e-commerce platform built with Django, featuring product catalog, user management, cart functionality, order processing, and review system with advanced filtering capabilities.
 
 ## Overview
 
 This Django-powered e-commerce backend provides scalable and modular functionality for managing an online store. The newly enhanced product APIs now support advanced filtering, pagination, and robust admin controls. The platform now includes comprehensive API documentation via Swagger UI.
+
+New enhancements include:
+
+- **Interactive Swagger UI** for API exploration & testing.
+- **Dockerized deployment** for consistent environment and scalability.
+- **Celery + RabbitMQ** for background task processing (emails, reports, payment confirmations).
+
+---
+
+## Swagger Usage
+
+The platform uses **Swagger UI** (`drf-yasg`) for API documentation.
+
+### Accessing Swagger
+- Development: [http://localhost:8000/swagger/](http://localhost:8000/swagger/)
+- ReDoc alternative: [http://localhost:8000/redoc/](http://localhost:8000/redoc/)
 
 
 ## Features
@@ -20,7 +55,7 @@ This Django-powered e-commerce backend provides scalable and modular functionali
 - Shopping cart functionality
 - Order processing system
 - Admin dashboard with advanced controls
-- **Swagger API Documentation** at `/swagger/`
+
 
 
 ### 🔍 Advanced Product API Features
@@ -93,6 +128,77 @@ This Django-powered e-commerce backend provides scalable and modular functionali
 - Schema definition
 - Authentication support
 - Available at `/swagger/` and `/redoc/`
+
+---
+### docker-compose.yml Example
+```yaml
+version: '3.9'
+
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - rabbitmq
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  celery:
+    build: .
+    command: celery -A ecommerce worker -l info
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - rabbitmq
+```
+
+### Running the App
+```bash
+docker-compose up --build
+```
+
+### Celery & RabbitMQ
+Celery is integrated for asynchronous tasks such as:
+
+- Sending order confirmation emails.
+
+- Processing payments.
+
+- Generating weekly sales reports.
+
+### Starting Celery Worker
+```bash
+celery -A ecommerce worker -l info
+```
+
+### Configuration
+(Includes .env settings for DB, Celery broker, etc.)
+# Celery & RabbitMQ
+CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+CELERY_RESULT_BACKEND=rpc://
+CELERY_TASK_TRACK_STARTED=True
+CELERY_TASK_TIME_LIMIT=30
 
 ---
 ## 🛠️ Tech Stack
@@ -255,6 +361,13 @@ Add to settings.py:
 - View order details
 
 #### Development Notes
+
+- Swagger UI is auto-generated — just ensure your endpoints are registered in urls.py.
+
+- Docker environment replicates production setup.
+
+- Celery tasks will not run without RabbitMQ running.
+
 **Models Overview**
 - Category: Product grouping with slug URLs
 

@@ -1,23 +1,38 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from . import views
-from .views import OrderViewSet
+from .views import (
+    OrderListView,
+    OrderCreateView,
+    OrderDetailView,
+    OrderPayView,
+    OrderCancelView,
+    OrderTrackView,
+    OrderInvoicePDFView,  
+    AddOrderItemView,
+    OrderViewSet,
+    StatusTransitionView
+)
 
-app_name = 'orders' 
+app_name = 'orders'
 
-# Traditional URLs
-urlpatterns = [
-    path('', views.OrderListView.as_view(), name='list'),
-    path('create/', views.OrderCreateView.as_view(), name='create'),
-    path('<int:pk>/', views.OrderDetailView.as_view(), name='detail'),
-    path('<int:pk>/pay/', views.OrderPayView.as_view(), name='pay'),
-    path('<int:pk>/cancel/', views.OrderCancelView.as_view(), name='cancel'),
-    path('<int:pk>/track/', views.OrderTrackView.as_view(), name='track'),
-    path('<int:pk>/invoice/', views.OrderInvoicePDFView.as_view(), name='invoice'),
+# Traditional Django URLs
+traditional_urlpatterns = [
+    path('', OrderListView.as_view(), name='list'),
+    path('create/', OrderCreateView.as_view(), name='create'),
+    path('<int:pk>/', OrderDetailView.as_view(), name='detail'),
+    path('<int:order_id>/add-item/', AddOrderItemView.as_view(), name='add-item'),
+    path('<int:pk>/pay/', OrderPayView.as_view(), name='pay'),
+    path('<int:pk>/cancel/', OrderCancelView.as_view(), name='cancel'),
+    path('<int:pk>/track/', OrderTrackView.as_view(), name='track'),
+    path('<int:pk>/invoice/', OrderInvoicePDFView.as_view(), name='invoice'),
+    path('orders/<int:pk>/transitions/', StatusTransitionView.as_view(), name='order-status-transitions'),
+    
+
 ]
 
-# API URLs
+# DRF API URLs
 router = DefaultRouter()
-router.register(r'', OrderViewSet, basename='order') 
+router.register(r'', OrderViewSet, basename='order')
 
-urlpatterns = router.urls
+# Combine both URL patterns
+urlpatterns = traditional_urlpatterns + router.urls

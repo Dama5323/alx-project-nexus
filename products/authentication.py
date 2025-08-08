@@ -1,5 +1,6 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.core.cache import cache
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
 class CachedJWTAuthentication(JWTAuthentication):
     def get_user(self, validated_token):
@@ -12,3 +13,15 @@ class CachedJWTAuthentication(JWTAuthentication):
             cache.set(cache_key, user, timeout=300)  # Cache for 5 minutes
         
         return user
+    
+
+class CachedJWTAuthScheme(OpenApiAuthenticationExtension):
+    target_class = 'products.authentication.CachedJWTAuthentication'
+    name = 'JWT Auth'
+    
+    def get_security_definition(self, auto_schema):
+        return {
+            'type': 'http',
+            'scheme': 'bearer',
+            'bearerFormat': 'JWT'
+        }

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
 from products.serializers import ProductSerializer
 from .models import Cart, CartItem
 
@@ -8,20 +9,52 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'quantity', 'subtotal']
-        read_only_fields = ['id', 'subtotal']
+        fields = ['id', 'product', 'quantity', 'added_at', 'price_at_addition', 'subtotal']
+        read_only_fields = ['added_at', 'price_at_addition']
 
     def get_subtotal(self, obj):
-        return obj.product.price * obj.quantity
+        return obj.subtotal
 
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
-    total = serializers.SerializerMethodField()
+    total_items = serializers.SerializerMethodField()
+    total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'created_at', 'items', 'total']
-        read_only_fields = ['id', 'user', 'created_at', 'total']
+        fields = ['id', 'items', 'total_items', 'total_price', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
-    def get_total(self, obj):
-        return sum(item.product.price * item.quantity for item in obj.items.all())
+    def get_total_items(self, obj):
+        return obj.item_count
+
+    def get_total_price(self, obj):
+        return obj.total
+
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            'Add Item Example',
+            value={
+                'product_id': 42,
+                'quantity': 2
+            },
+            request_only=True,
+            description='Example request for adding an item to cart'
+        )
+    ]
+)
+class CartItemActionSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField(
+        help_text="ID of the product to add/remove"
+    )
+    quantity = serializers.IntegerField(
+        help_text="Number of items to add/remove",
+        min_value=1
+    )
+
+    def validate_product_id(self, value):
+        from products.models import Product
+        if not Product.objects.filter(pk=value).exists():
+            raise serializers.ValidationError("Product does not exist")
+        return value
