@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import DatabaseError, models, transaction
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from products.models import Product
@@ -7,7 +7,9 @@ from django.db.models import Q, Sum, F
 from decimal import Decimal, InvalidOperation
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 import json
-from django.db import transaction
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Order(models.Model):
     """
@@ -127,17 +129,21 @@ class Order(models.Model):
             models.Index(fields=['status', 'created_at'], name='status_created_idx'),
             models.Index(fields=['user', '-created_at'], name='user_order_history_idx'),
             models.Index(fields=['payment_method', 'status'], name='payment_status_idx'),
-            models.Index(
-                fields=['created_at'], 
-                name='fast_created_at_idx',
-                condition=Q(status__in=['PENDING', 'PAID'])
-            ),
         ]
         permissions = [
             ('cancel_order', 'Can cancel order'),
             ('refund_order', 'Can refund order'),
             ('export_orders', 'Can export order data'),
         ]
+        constraints = [
+            models.CheckConstraint(
+                check=Q(total_price__gte=0),
+                name='non_negative_total_price'
+            )
+        ]
+
+    def __str__(self):
+        return f"Order #{self.pk} - {self.user.email} ({self.get_status_display()})"
 
     def clean(self):
         """Validate JSON fields before saving"""
@@ -155,9 +161,6 @@ class Order(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"Order #{self.pk} - {self.user.email} ({self.get_status_display()})"
-
     @property
     def subtotal(self):
         """Calculate pre-tax/discount total"""
@@ -165,19 +168,27 @@ class Order(models.Model):
 
     @property
     def item_count(self):
-        """Optimized item count using annotation"""
-        return self.items.aggregate(total=Sum('quantity'))['total'] or 0
+        """Optimized item count"""
+        return self.items.count()
 
     def update_total(self):
         """Atomic update of order totals with lock to prevent race conditions"""
         with transaction.atomic():
-            order = Order.objects.select_for_update().get(pk=self.pk)
-            aggregates = order.items.aggregate(
-                total=Sum(F('price') * F('quantity')),
-                count=models.Count('id')
-            )
-            order.total_price = aggregates['total'] or 0
-            order.save(update_fields=['total_price'])
+            try:
+                # Use select_for_update to lock the order
+                order = Order.objects.select_for_update().get(pk=self.pk)
+                total = Decimal('0')
+                
+                # Use iterator() for memory efficiency with large orders
+                for item in order.items.all().iterator():
+                    total += Decimal(str(item.price)) * Decimal(str(item.quantity))
+                
+                order.total_price = total
+                order.save(update_fields=['total_price'])
+                
+            except (DatabaseError, InvalidOperation) as e:
+                logger.error(f"Failed to update order total for order {self.pk}: {e}")
+                raise
 
     def mark_as_paid(self, payment_date=None):
         """Transition order to paid status with payment verification"""
@@ -206,8 +217,13 @@ class Order(models.Model):
         """Restock products when order is cancelled"""
         for item in self.items.all():
             if item.product:
-                item.product.stock += item.quantity
-                item.product.save()
+                try:
+                    with transaction.atomic():
+                        product = Product.objects.select_for_update().get(pk=item.product.pk)
+                        product.stock += item.quantity
+                        product.save()
+                except Exception as e:
+                    logger.error(f"Failed to restock product {item.product.pk}: {e}")
 
 
 class OrderItem(models.Model):
@@ -275,17 +291,24 @@ class OrderItem(models.Model):
                 fields=['order', 'product'],
                 name='unique_order_product',
                 condition=Q(product__isnull=False)
+            ),
+            models.CheckConstraint(
+                check=Q(quantity__gte=1),
+                name='min_quantity_check'
+            ),
+            models.CheckConstraint(
+                check=Q(price__gte=0),
+                name='non_negative_price'
             )
         ]
         indexes = [
             models.Index(fields=['order', 'product'], name='order_product_idx'),
             models.Index(fields=['product'], name='product_sales_idx'),
-            models.Index(
-                fields=['created_at'],
-                name='daily_sales_idx',
-                condition=Q(order__status='DELIVERED')
-            ),
+            models.Index(fields=['created_at'], name='orderitem_created_idx'),
         ]
+
+    def __str__(self):
+        return f"{self.quantity}x {self.product_name or 'Deleted Product'} @ {self.price} (Order #{self.order_id})"
 
     def clean(self):
         """Validate variant JSON before saving"""
@@ -315,9 +338,6 @@ class OrderItem(models.Model):
         """Handle inventory and order totals when deleting"""
         super().delete(*args, **kwargs)
         self.order.update_total()
-
-    def __str__(self):
-        return f"{self.quantity}x {self.product_name} @ {self.price} (Order #{self.order_id})"
 
     @property
     def subtotal(self):

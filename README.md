@@ -259,7 +259,7 @@ CELERY_TASK_TIME_LIMIT=30
 
 ---
 
-## Installation
+### installation
 ### Prerequisites
 - Python 3.8+
 - PostgreSQL 12+
@@ -360,7 +360,7 @@ Add to settings.py:
 - Update order status
 - View order details
 
-#### Development Notes
+#### #development-notes
 
 - Swagger UI is auto-generated — just ensure your endpoints are registered in urls.py.
 

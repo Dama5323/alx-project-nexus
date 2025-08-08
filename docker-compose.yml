@@ -2,18 +2,30 @@ version: '3.9'
 
 services:
   web:
-    build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - .:/code
+      - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
     ports:
       - "8000:8000"
     env_file:
       - .env
     depends_on:
-      - db
-      - redis
-      - rabbitmq
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - backend
 
   db:
     image: postgres:15
@@ -25,45 +37,88 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
 
   redis:
     image: redis:7.2-alpine
-    ports:
-      - "6379:6379"
+    command: redis-server --save 60 1 --loglevel warning
     volumes:
       - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
 
   rabbitmq:
     image: rabbitmq:3.12-management
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: "/"
     ports:
-      - "5672:5672"  # Celery connection
+      - "5672:5672"  # AMQP
       - "15672:15672"  # Management UI
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - backend
 
   celery:
-    build: .
-    command: celery -A your_django_app_name worker --loglevel=info
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A DjangoCommerce worker --loglevel=info --concurrency=4
     volumes:
-      - .:/code
+      - .:/app
     env_file:
       - .env
     depends_on:
-      - rabbitmq
-      - redis
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - backend
 
   celery_beat:
-    build: .
-    command: celery -A your_django_app_name beat --loglevel=info
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A DjangoCommerce beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
-      - .:/code
+      - .:/app
     env_file:
       - .env
     depends_on:
-      - rabbitmq
-      - redis
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - backend
 
 volumes:
   postgres_data:
   redis_data:
+  static_volume:
+  media_volume:
+
+networks:
+  backend:
+    driver: bridge

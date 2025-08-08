@@ -27,10 +27,10 @@ urlpatterns = [
     path('products/<slug:slug>/', product_detail_view, name='detail'),
     
     # API endpoints
-    path('', include((router.urls, 'products-api'))),
+    path('api/', include((router.urls, 'products-api'))),
     
     # Additional ID-based product endpoint
-    path('products/by-id/<int:pk>/', 
+    path('api/products/by-id/<int:pk>/', 
          ProductViewSet.as_view({'get': 'retrieve'}), 
          name='product-by-id'),
 ]

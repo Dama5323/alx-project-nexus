@@ -92,25 +92,32 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
     image = models.ImageField(upload_to='products/', blank=True, null=True)
+
     slug = models.SlugField(max_length=200, unique=True, blank=True, db_index=True)
     featured = models.BooleanField(default=False, verbose_name="Featured Product")
 
     def clean(self):
+        """Validate the product before saving"""
         if not self.name:
             raise ValidationError("Name is required")
+        
         if not self.slug:
             self.slug = slugify(self.name)
+            
         if Product.objects.filter(slug=self.slug).exclude(id=self.id).exists():
             raise ValidationError('This slug is already in use.')
     
     def save(self, *args, **kwargs):
-        if not self.slug:
+        """Custom save method with slug generation"""
+        if not self.slug: 
             base_slug = slugify(self.name)
             self.slug = base_slug
             counter = 1
             while Product.objects.filter(slug=self.slug).exclude(id=self.id).exists():
                 self.slug = f"{base_slug}-{counter}"
                 counter += 1
+        
+        
         super().save(*args, **kwargs)
     
     def __str__(self):
