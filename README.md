@@ -19,9 +19,9 @@
 4. [Docker Containerization](#docker-containerization)
 5. [Celery & RabbitMQ](#celery--rabbitmq)
 6. [Admin Guide](#-admin-guide)
-7. [Installation](#-installation)
+7. [Installation](#-Installation)
 8. [Configuration](#configuration)
-9. [Development Notes](#-development-notes)
+9. [Development Notes](#-Development-notes)
 
 A modular e-commerce platform built with Django, featuring product catalog, user management, cart functionality, order processing, and review system with advanced filtering capabilities.
 
@@ -46,7 +46,7 @@ The platform uses **Swagger UI** (`drf-yasg`) for API documentation.
 - ReDoc alternative: [http://localhost:8000/redoc/](http://localhost:8000/redoc/)
 
 
-## Features
+## ## Features Overview
 
 ### Core Functionality
 - **Enhanced Product Catalog** with filtering/pagination
@@ -315,7 +315,7 @@ Add to settings.py:
 - MEDIA_URL = '/media/'
 - MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
-## Admin Guide
+## #admin-guide
 
 ### Accessing the Admin
 - URL: `/admin/`  
