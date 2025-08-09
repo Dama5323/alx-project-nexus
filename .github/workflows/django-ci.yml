@@ -10,8 +10,8 @@ jobs:
         image: postgres:13
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db  # This automatically creates the database
+          POSTGRES_PASSWORD: postgres123  # Stronger password
+          POSTGRES_DB: test_db
         ports:
           - 5432:5432
         options: >-
@@ -19,16 +19,14 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      
+        # Add these to ensure proper initialization
+        volumes:
+          - postgres-data:/var/lib/postgresql/data
+
       redis:
         image: redis:6
         ports:
           - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
     - uses: actions/checkout@v3
@@ -41,27 +39,32 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r requirements.txt psycopg2-binary
     
-    - name: Setup PostgreSQL
+    - name: Wait for PostgreSQL
+      run: sleep 5  # Give PostgreSQL time to initialize
+    
+    - name: Verify PostgreSQL connection
       env:
-        PGPASSWORD: postgres
+        PGPASSWORD: postgres123
       run: |
-        # This will succeed whether the DB exists or not
-        psql -h localhost -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'test_db'" | grep -q 1 || psql -h localhost -U postgres -c "CREATE DATABASE test_db;"
-        psql -h localhost -U postgres -d test_db -c "CREATE EXTENSION IF NOT EXISTS hstore;"
+        psql -h localhost -U postgres -c "SELECT 1;" test_db
     
     - name: Run migrations
       env:
-        DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
-        REDIS_URL: redis://localhost:6379/0
+        DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
+        DJANGO_SETTINGS_MODULE: your_project.settings
       run: |
         python manage.py migrate
     
     - name: Run tests
       env:
-        DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
-        REDIS_URL: redis://localhost:6379/0
+        DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
         DJANGO_SETTINGS_MODULE: your_project.settings
       run: |
         python manage.py test
+
+    # Clean up volume
+    - name: Cleanup
+      if: always()
+      run: docker volume rm postgres-data
