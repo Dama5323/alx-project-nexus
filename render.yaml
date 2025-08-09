@@ -1,41 +1,41 @@
-# render.yaml
 services:
   - type: web
-    name: django-commerce-prod  # Unique name for your service
+    name: django-commerce-prod
     runtime: python
-    pythonVersion: "3.10.6"  # Match your local Python version
+    pythonVersion: 3.10.6
     
-    # Build commands
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
       python manage.py migrate
       python manage.py collectstatic --noinput
     
-    # Startup command
-    startCommand: gunicorn your_project.wsgi:application --workers 4
+    startCommand: gunicorn DjangoCommerce.wsgi:application --workers 4
     
-    # Environment variables
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: your_project.settings
+        value: DjangoCommerce.settings
       - key: SECRET_KEY
-        generateValue: true  # Auto-generate secure key
+        generateValue: true
       - key: DEBUG
-        value: "False"  # Must be string "False" not boolean False
+        value: "False"
       - key: DISABLE_COLLECTSTATIC
         value: "0"
+      - key: REDIS_URL
+        fromService:
+          name: django-commerce-redis
+          type: redis
+          property: connectionString
     
-    # Database configuration
-    database:
-      name: django-commerce-db
-      postgresVersion: "14"  
-    
-    # Health check
-    healthCheckPath: /health/
+    healthCheckPath: /
     healthCheckTimeout: 180
 
 databases:
   - name: django-commerce-db
-    plan: free  # Or "starter" for production
-    postgresVersion: "14"
+    plan: free
+    postgresVersion: 14
+
+services:
+  - type: redis
+    name: django-commerce-redis
+    plan: free
