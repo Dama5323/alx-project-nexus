@@ -1,19 +1,68 @@
 services:
   - type: web
     name: djangocommerce-web
-    runtime: python
-    buildCommand: |
-      python -V  # Verify version in logs
-      pip install --upgrade pip
-      pip install -r requirements.txt
-      python manage.py migrate
-      python manage.py collectstatic --noinput
-    startCommand: gunicorn your_project.wsgi:application --workers 2 --timeout 120
+    runtime: docker
+    dockerfilePath: Dockerfile
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: your_project.settings
-      - key: PYTHON_VERSION
-        value: "3.10.13"  # Explicit environment variable
+        value: DjangoCommerce.settings
       - key: SECRET_KEY
         generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: DISABLE_COLLECTSTATIC
+        value: "0"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: djangocommerce-db
+          property: connectionString
     healthCheckPath: /health/
+    database:
+      name: djangocommerce-db
+      postgresVersion: "14"
+
+  - type: worker
+    name: djangocommerce-celery-worker
+    runtime: docker
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: DjangoCommerce.settings
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: djangocommerce-redis
+          property: connectionString
+      - key: DATABASE_URL
+        fromDatabase:
+          name: djangocommerce-db
+          property: connectionString
+    command: celery -A DjangoCommerce worker --loglevel=info --concurrency=4
+
+  - type: worker
+    name: djangocommerce-celery-beat
+    runtime: docker
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: DjangoCommerce.settings
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: djangocommerce-redis
+          property: connectionString
+      - key: DATABASE_URL
+        fromDatabase:
+          name: djangocommerce-db
+          property: connectionString
+    command: celery -A DjangoCommerce beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+databases:
+  - name: djangocommerce-db
+    plan: free
+    postgresVersion: "14"
+
+services:
+  - type: redis
+    name: djangocommerce-redis
+    plan: free
