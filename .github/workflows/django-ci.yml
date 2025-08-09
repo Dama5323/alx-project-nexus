@@ -33,11 +33,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Find and verify manage.py
+      id: find-manage
+      run: |
+        # Search for manage.py in the repository
+        MANAGEPY_PATH=$(find . -name manage.py -printf '%h\n' | head -1)
+        if [ -z "$MANAGEPY_PATH" ]; then
+          echo "::error::Could not find manage.py in the repository"
+          exit 1
+        fi
+        echo "Found manage.py in: $MANAGEPY_PATH"
+        echo "MANAGEPY_PATH=$MANAGEPY_PATH" >> $GITHUB_ENV
+    
     - name: Run migrations
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
         DJANGO_SETTINGS_MODULE: djangocommerce.settings
       run: |
+        cd "$MANAGEPY_PATH"
         python manage.py migrate
     
     - name: Run tests
@@ -45,4 +58,5 @@ jobs:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
         DJANGO_SETTINGS_MODULE: djangocommerce.settings
       run: |
+        cd "$MANAGEPY_PATH"
         python manage.py test
