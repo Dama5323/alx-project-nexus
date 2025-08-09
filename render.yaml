@@ -1,41 +1,75 @@
 services:
   - type: web
-    name: django-commerce-prod
-    runtime: python
-    pythonVersion: 3.10.6
-    
+    name: my-django-app
+    env: python
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-      python manage.py migrate
-      python manage.py collectstatic --noinput
-    
-    startCommand: gunicorn DjangoCommerce.wsgi:application --workers 4
-    
+    startCommand: gunicorn my_project.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
-      - key: DJANGO_SETTINGS_MODULE
-        value: DjangoCommerce.settings
-      - key: SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: my-database
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: my-redis
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DEBUG
         value: "False"
-      - key: DISABLE_COLLECTSTATIC
-        value: "0"
+
+  - type: worker
+    name: celery-worker
+    env: python
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: celery -A my_project worker --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: my-database
+          property: connectionString
       - key: REDIS_URL
         fromService:
-          name: django-commerce-redis
           type: redis
+          name: my-redis
           property: connectionString
-    
-    healthCheckPath: /
-    healthCheckTimeout: 180
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
+
+  - type: worker
+    name: celery-beat
+    env: python
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: celery -A my_project beat --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: my-database
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: my-redis
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
 
 databases:
-  - name: django-commerce-db
+  - name: my-database
     plan: free
-    postgresVersion: 14
 
 services:
   - type: redis
-    name: django-commerce-redis
+    name: my-redis
     plan: free
