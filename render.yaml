@@ -1,51 +1,41 @@
+# render.yaml
 services:
   - type: web
-    name: djangocommerce-backend
-    env: python
-    region: oregon  
-    plan: free
+    name: django-commerce-prod  # Unique name for your service
+    runtime: python
+    pythonVersion: "3.10.6"  # Match your local Python version
     
-    # Build configuration
+    # Build commands
     buildCommand: |
+      pip install --upgrade pip
       pip install -r requirements.txt
+      python manage.py migrate
       python manage.py collectstatic --noinput
     
-    # Start command
-    startCommand: "gunicorn DjangoCommerce.wsgi:application"
+    # Startup command
+    startCommand: gunicorn your_project.wsgi:application --workers 4
     
     # Environment variables
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.10  
-      - key: DATABASE_URL
-        fromDatabase:
-          name: djangocommerce-db
-          property: connectionString
       - key: DJANGO_SETTINGS_MODULE
-        value: DjangoCommerce.settings.production
-      - key: DEBUG
-        value: "False"
+        value: your_project.settings
       - key: SECRET_KEY
-        generateValue: true
-      - key: ALLOWED_HOSTS
-        value: ".onrender.com"
-      - key: POSTGRES_DB
-        value: djangocommerce
-      - key: POSTGRES_USER
-        value: djangouser
-      - key: GRAPHQL_URL
-        value: /graphql
+        generateValue: true  # Auto-generate secure key
+      - key: DEBUG
+        value: "False"  # Must be string "False" not boolean False
+      - key: DISABLE_COLLECTSTATIC
+        value: "0"
     
-    # Health check (optional)
-    healthCheckPath: /api/health/
+    # Database configuration
+    database:
+      name: django-commerce-db
+      postgresVersion: "14"  
     
-    # Auto-deploy from git
-    autoDeploy: true
+    # Health check
+    healthCheckPath: /health/
+    healthCheckTimeout: 180
 
-# Database configuration
 databases:
-  - name: djangocommerce-db
-    databaseName: djangocommerce
-    user: djangouser
-    region: oregon  
-    plan: free
+  - name: django-commerce-db
+    plan: free  # Or "starter" for production
+    postgresVersion: "14"

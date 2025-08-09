@@ -1,10 +1,10 @@
-name: Django CI
-
-on: [push, pull_request]
-
+name: Pause Actions
+on: workflow_dispatch
 jobs:
-  test:
+  pause:
     runs-on: ubuntu-latest
+    steps:
+      - run: echo "Workflows paused"
     services:
       postgres:
         image: postgres:14
