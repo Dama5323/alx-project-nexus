@@ -31,7 +31,7 @@ jobs:
       DB_PASSWORD: 1234
       DB_HOST: postgres  
       DB_PORT: 5432
-      SECRET_KEY: your_django_secret_key
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
     steps:
       - name: Check out repo

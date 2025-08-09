@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: djangocommerce-backend
+    env: python
+    region: oregon  
+    plan: free
+    
+    # Build configuration
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+    
+    # Start command
+    startCommand: "gunicorn DjangoCommerce.wsgi:application"
+    
+    # Environment variables
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10  
+      - key: DATABASE_URL
+        fromDatabase:
+          name: djangocommerce-db
+          property: connectionString
+      - key: DJANGO_SETTINGS_MODULE
+        value: DjangoCommerce.settings.production
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: POSTGRES_DB
+        value: djangocommerce
+      - key: POSTGRES_USER
+        value: djangouser
+      - key: GRAPHQL_URL
+        value: /graphql
+    
+    # Health check (optional)
+    healthCheckPath: /api/health/
+    
+    # Auto-deploy from git
+    autoDeploy: true
+
+# Database configuration
+databases:
+  - name: djangocommerce-db
+    databaseName: djangocommerce
+    user: djangouser
+    region: oregon  
+    plan: free

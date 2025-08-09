@@ -14,6 +14,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
 import os
+from decouple import config  
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,13 +24,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2ry39cn&%v8$tb!fh($_xf7*oxxmt&&b%jyxf=6!@n+#g)c+^4'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Security - MUST be False in production
+DEBUG = False
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS should include all domains that can access your site
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# CSRF protection for HTTPS domains
+CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host]
 
 # Application definition
 
@@ -50,7 +53,17 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'django_filters',
+    'django_extensions',
+    'graphene_django',
+    'graphql_jwt.refresh_token',
 ]
+
+GRAPHENE = {
+    'SCHEMA': 'DjangoCommerce.schema.schema',
+    'MIDDLEWARE': [
+         'graphql_jwt.middleware.JSONWebTokenMiddleware()', 
+    ],
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -61,6 +74,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+   #'graphql_jwt.middleware.JSONWebTokenMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'DjangoCommerce.urls'
@@ -106,16 +121,14 @@ load_dotenv()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT'),
-        'OPTIONS': {
-            'connect_timeout': 5,
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT'),
         }
     }
-}
+    
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
@@ -136,6 +149,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+]
+
+AUTHENTICATION_BACKENDS = [
+    'accounts.auth_backends.EmailBackend',
+    'graphql_jwt.backends.JSONWebTokenBackend',  
+    'django.contrib.auth.backends.ModelBackend',  
 ]
 
 

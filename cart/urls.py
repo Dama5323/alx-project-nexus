@@ -22,12 +22,11 @@ urlpatterns = [
     path('api/remove-item/', CartViewSet.as_view({'post': 'remove_item'}), name='api-remove-item'),
     path('api/clear/', CartViewSet.as_view({'delete': 'clear_cart'}), name='api-clear'),
     path('api/summary/', CartViewSet.as_view({'get': 'cart_summary'}), name='api-summary'),
-
-    # Custom docs view
+    
+    # swagger documentation
     path('api/docs/cart/', SpectacularSwaggerView.as_view(
         url_name='schema',
         template_name='swagger_ui.html',
         title="Cart API Documentation"
     ), name='cart-docs'),
 ]
-

@@ -2,6 +2,9 @@ from rest_framework import serializers
 from .models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from drf_yasg import openapi
+from django.contrib.auth import authenticate
+from rest_framework import serializers
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -37,7 +40,22 @@ class UserSerializer(serializers.ModelSerializer):
             'required': ['email']
         }
 
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    email = serializers.EmailField()
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        user = authenticate(request=self.context.get("request"), email=email, password=password)
+
+        if not user:
+            raise serializers.ValidationError("Invalid email or password")
+
+        data = super().validate(attrs)
+        return data
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
