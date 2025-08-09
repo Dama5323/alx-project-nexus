@@ -1,6 +1,6 @@
 name: Django CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   test:
@@ -14,7 +14,21 @@ jobs:
           POSTGRES_DB: test_djangocommerce
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
     - uses: actions/checkout@v3
@@ -26,14 +40,16 @@ jobs:
     
     - name: Install dependencies
       run: |
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install django-extensions
     
     - name: Run tests
       env:
         DB_NAME: test_djangocommerce
         DB_USER: postgres
         DB_PASSWORD: postgres
-        SECRET_KEY: ${{ secrets.SECRET_KEY || 'django-insecure-test-key' }}
+        REDIS_URL: redis://localhost:6379/0
+        SECRET_KEY: ${{ secrets.SECRET_KEY || 'test-key' }}
       run: |
+        python manage.py migrate
         python manage.py test
