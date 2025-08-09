@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:14  # Updated version
+        image: postgres:14
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres123
@@ -43,17 +43,25 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Configure project paths
-      id: project-config
+    - name: Find project root
+      id: find-project
       run: |
         PROJECT_ROOT=$(dirname $(find . -name manage.py -print -quit))
         echo "PROJECT_ROOT=${PROJECT_ROOT#./}" >> $GITHUB_ENV
-        
-        SETTINGS_PATH=$(find . -path "*/settings.py" -print -quit)
-        SETTINGS_MODULE=$(echo ${SETTINGS_PATH#./} | sed 's/.py$//' | tr '/' '.')
-        echo "SETTINGS_MODULE=$SETTINGS_MODULE" >> $GITHUB_ENV
+        echo "Using project root: $PROJECT_ROOT"
     
-    - name: Run migrations
+    - name: Apply core migrations first
+      env:
+        DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
+        DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
+      run: |
+        cd "$PROJECT_ROOT"
+        python manage.py migrate contenttypes
+        python manage.py migrate auth
+        python manage.py migrate admin
+        python manage.py migrate sessions
+    
+    - name: Apply all other migrations
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
         DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
