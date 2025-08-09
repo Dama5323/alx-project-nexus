@@ -33,30 +33,33 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Find and verify manage.py
-      id: find-manage
+    - name: Find project root
+      id: find-project
       run: |
-        # Search for manage.py in the repository
-        MANAGEPY_PATH=$(find . -name manage.py -printf '%h\n' | head -1)
-        if [ -z "$MANAGEPY_PATH" ]; then
-          echo "::error::Could not find manage.py in the repository"
-          exit 1
-        fi
-        echo "Found manage.py in: $MANAGEPY_PATH"
-        echo "MANAGEPY_PATH=$MANAGEPY_PATH" >> $GITHUB_ENV
+        # Find the directory containing manage.py
+        MANAGEPY_DIR=$(dirname $(find . -name manage.py -print -quit))
+        echo "MANAGEPY_DIR=${MANAGEPY_DIR#./}" >> $GITHUB_ENV
+        
+        # Find the settings module path
+        SETTINGS_PATH=$(find . -name settings.py -print -quit)
+        SETTINGS_MODULE=$(echo ${SETTINGS_PATH#./} | sed 's/.py$//' | tr '/' '.')
+        echo "SETTINGS_MODULE=$SETTINGS_MODULE" >> $GITHUB_ENV
+        
+        echo "Project root: $MANAGEPY_DIR"
+        echo "Settings module: $SETTINGS_MODULE"
     
     - name: Run migrations
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
-        DJANGO_SETTINGS_MODULE: djangocommerce.settings
+        DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
       run: |
-        cd "$MANAGEPY_PATH"
+        cd "$MANAGEPY_DIR"
         python manage.py migrate
     
     - name: Run tests
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
-        DJANGO_SETTINGS_MODULE: DjangoCommerce.settings
+        DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
       run: |
-        cd "$MANAGEPY_PATH"
+        cd "$MANAGEPY_DIR"
         python manage.py test
