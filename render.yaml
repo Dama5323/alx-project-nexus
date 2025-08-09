@@ -1,75 +1,68 @@
 services:
   - type: web
-    name: my-django-app
-    env: python
+    name: djangocommerce-web
+    runtime: python
+    pythonVersion: "3.10.6"
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: gunicorn my_project.wsgi:application --bind 0.0.0.0:$PORT
+      python manage.py migrate
+      python manage.py collectstatic --noinput
+    startCommand: gunicorn your_project.wsgi:application --workers 4 --timeout 120 --bind 0.0.0.0:$PORT
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: my-database
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: my-redis
-          property: connectionString
-      - key: DJANGO_SECRET_KEY
+      - key: DJANGO_SETTINGS_MODULE
+        value: your_project.settings
+      - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
         value: "False"
+      - key: DISABLE_COLLECTSTATIC
+        value: "0"
+    healthCheckPath: /health/
+    database:
+      name: djangocommerce-db
+      postgresVersion: "14"
 
   - type: worker
-    name: celery-worker
-    env: python
+    name: djangocommerce-celery-worker
+    runtime: python
+    pythonVersion: "3.10.6"
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: celery -A my_project worker --loglevel=info
+    startCommand: celery -A your_project worker --loglevel=info --concurrency=4
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: my-database
-          property: connectionString
-      - key: REDIS_URL
+      - key: DJANGO_SETTINGS_MODULE
+        value: your_project.settings
+      - key: CELERY_BROKER_URL
         fromService:
           type: redis
-          name: my-redis
+          name: djangocommerce-redis
           property: connectionString
-      - key: DJANGO_SECRET_KEY
-        sync: false
-      - key: DEBUG
-        value: "False"
 
   - type: worker
-    name: celery-beat
-    env: python
+    name: djangocommerce-celery-beat
+    runtime: python
+    pythonVersion: "3.10.6"
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: celery -A my_project beat --loglevel=info
+    startCommand: celery -A your_project beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: my-database
-          property: connectionString
-      - key: REDIS_URL
+      - key: DJANGO_SETTINGS_MODULE
+        value: your_project.settings
+      - key: CELERY_BROKER_URL
         fromService:
           type: redis
-          name: my-redis
+          name: djangocommerce-redis
           property: connectionString
-      - key: DJANGO_SECRET_KEY
-        sync: false
-      - key: DEBUG
-        value: "False"
 
 databases:
-  - name: my-database
+  - name: djangocommerce-db
     plan: free
+    postgresVersion: "14"
 
 services:
   - type: redis
-    name: my-redis
+    name: djangocommerce-redis
     plan: free
