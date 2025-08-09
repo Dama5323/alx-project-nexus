@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:13
+        image: postgres:14  # Updated version
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres123
@@ -19,6 +19,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
       redis:
         image: redis:6
         ports:
@@ -42,33 +43,29 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Find project root
-      id: find-project
+    - name: Configure project paths
+      id: project-config
       run: |
-        # Find the directory containing manage.py
-        MANAGEPY_DIR=$(dirname $(find . -name manage.py -print -quit))
-        echo "MANAGEPY_DIR=${MANAGEPY_DIR#./}" >> $GITHUB_ENV
+        PROJECT_ROOT=$(dirname $(find . -name manage.py -print -quit))
+        echo "PROJECT_ROOT=${PROJECT_ROOT#./}" >> $GITHUB_ENV
         
-        # Find the settings module path
-        SETTINGS_PATH=$(find . -name settings.py -print -quit)
+        SETTINGS_PATH=$(find . -path "*/settings.py" -print -quit)
         SETTINGS_MODULE=$(echo ${SETTINGS_PATH#./} | sed 's/.py$//' | tr '/' '.')
         echo "SETTINGS_MODULE=$SETTINGS_MODULE" >> $GITHUB_ENV
-        
-        echo "Project root: $MANAGEPY_DIR"
-        echo "Settings module: $SETTINGS_MODULE"
     
     - name: Run migrations
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
         DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
       run: |
-        cd "$MANAGEPY_DIR"
+        cd "$PROJECT_ROOT"
         python manage.py migrate
     
     - name: Run tests
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
         DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
       run: |
-        cd "$MANAGEPY_DIR"
+        cd "$PROJECT_ROOT"
         python manage.py test
