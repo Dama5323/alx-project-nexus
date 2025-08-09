@@ -55,12 +55,6 @@ INSTALLED_APPS = [
     'django_filters',
 ]
 
-GRAPHENE = {
-    'SCHEMA': 'DjangoCommerce.schema.schema',
-    'MIDDLEWARE': [
-         'graphql_jwt.middleware.JSONWebTokenMiddleware()', 
-    ],
-}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
