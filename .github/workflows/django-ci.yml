@@ -10,7 +10,7 @@ jobs:
         image: postgres:13
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres123  # Stronger password
+          POSTGRES_PASSWORD: postgres123
           POSTGRES_DB: test_db
         ports:
           - 5432:5432
@@ -19,9 +19,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        # Add these to ensure proper initialization
-        volumes:
-          - postgres-data:/var/lib/postgresql/data
 
       redis:
         image: redis:6
@@ -41,19 +38,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt psycopg2-binary
     
-    - name: Wait for PostgreSQL
-      run: sleep 5  # Give PostgreSQL time to initialize
-    
-    - name: Verify PostgreSQL connection
-      env:
-        PGPASSWORD: postgres123
-      run: |
-        psql -h localhost -U postgres -c "SELECT 1;" test_db
+    - name: Install project
+      run: pip install -e .
     
     - name: Run migrations
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
         DJANGO_SETTINGS_MODULE: your_project.settings
+        PYTHONPATH: ${{ github.workspace }}
       run: |
         python manage.py migrate
     
@@ -61,10 +53,6 @@ jobs:
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
         DJANGO_SETTINGS_MODULE: your_project.settings
+        PYTHONPATH: ${{ github.workspace }}
       run: |
         python manage.py test
-
-    # Clean up volume
-    - name: Cleanup
-      if: always()
-      run: docker volume rm postgres-data
