@@ -33,11 +33,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Run migrations
+      env:
+        DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
+        DJANGO_SETTINGS_MODULE: djangocommerce.settings
+      run: |
+        python manage.py migrate
+    
     - name: Run tests
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
-        DJANGO_SETTINGS_MODULE: commerce.settings  # Update this
-        PYTHONPATH: ${{ github.workspace }}
+        DJANGO_SETTINGS_MODULE: djangocommerce.settings
       run: |
-        cd commerce  # Your Django project directory
         python manage.py test
