@@ -53,8 +53,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'django_filters',
-    'graphene_django',
-    'graphql_jwt.refresh_token',
 ]
 
 GRAPHENE = {
