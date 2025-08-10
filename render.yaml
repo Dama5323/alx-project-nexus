@@ -2,7 +2,7 @@ databases:
   - name: djangocommerce-db
     plan: free
     databaseName: djangocommerce
-    user: postgres
+    user: djangocommerceuser
 
 services:
   - type: web
@@ -21,8 +21,8 @@ services:
       - key: ALLOWED_HOSTS
         value: "djangocommerce.onrender.com,*.onrender.com,localhost,127.0.0.1"
       - key: WEB_CONCURRENCY
-        value: 4
+        value: "4"
       - key: USE_WHITENOISE
-        value: true
+        value: "true"
       - key: DEBUG
-        value: false
+        value: "false"
