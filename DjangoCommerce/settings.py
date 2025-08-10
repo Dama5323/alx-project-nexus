@@ -18,6 +18,7 @@ from decouple import config
 import dj_database_url
 import environ
 
+
 env = environ.Env()
 environ.Env.read_env()
 
@@ -33,7 +34,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 
 # Security - MUST be False in production
-DEBUG = True
+DEBUG = False
 
 # ALLOWED_HOSTS configuration
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
@@ -72,7 +73,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-   #'graphql_jwt.middleware.JSONWebTokenMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware'
     
 ]
 
@@ -116,26 +117,28 @@ WSGI_APPLICATION = 'DjangoCommerce.wsgi.application'
 
 load_dotenv()
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
-        'OPTIONS': {
-            'connect_timeout': 5,  # 5 second timeout
-        },
-    }
-}
 
-#ATABASES = {
-  # 'default': dj_database_url.config(
-  #     default='postgres://postgres:postgres123@localhost:5432/test_db',
-    #   conn_max_age=600
-   #)
-#
+if os.getenv("RENDER"):  # production on Render
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.getenv('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:  # local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'mysite'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
+
+
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
