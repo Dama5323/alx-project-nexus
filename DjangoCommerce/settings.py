@@ -40,7 +40,10 @@ DEBUG = False
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # CSRF protection for HTTPS domains
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000'] 
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'https://djangocommerce-web.onrender.com',
+]
 
 # Application definition
 
@@ -120,12 +123,9 @@ load_dotenv()
 
 if os.getenv("RENDER"):  # production on Render
     DATABASES = {
-        'default': dj_database_url.config(
-            default=os.getenv('DATABASE_URL'),
-            conn_max_age=600,
-            ssl_require=True
-        )
+        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
     }
+
 else:  # local development
     DATABASES = {
         'default': {
@@ -140,7 +140,8 @@ else:  # local development
 
 
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-me')
+
 
 
 # Password validation
@@ -184,7 +185,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -302,15 +303,17 @@ LOGGING = {
     },
 }
 
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1')
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'LOCATION': REDIS_URL,
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
     }
 }
+
 
 # Cache content types for 24 hours
 CONTENT_TYPE_CACHE_TIMEOUT = 60 * 60 * 24
