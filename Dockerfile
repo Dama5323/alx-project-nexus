@@ -1,5 +1,5 @@
-# Use official Python image matching Render's supported version
-FROM python:3.10.13-slim-buster
+# Use updated Python image
+FROM python:3.10-slim-bookworm
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -7,14 +7,13 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PORT=8000
 
-# Install system dependencies + PostgreSQL client
+# Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set work directory
 WORKDIR /app
 
 # Install Python dependencies
@@ -22,13 +21,13 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# Copy project (with .dockerignore filtering)
+# Copy project
 COPY . .
 
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
-# Runtime command (overridden for workers in render.yaml)
+# Run Gunicorn
 CMD ["gunicorn", "DjangoCommerce.wsgi:application", \
      "--bind", "0.0.0.0:$PORT", \
      "--workers", "4", \

@@ -16,6 +16,12 @@ from datetime import timedelta
 import os
 from decouple import config  
 import dj_database_url
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,11 +35,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security - MUST be False in production
 DEBUG = True
 
-# ALLOWED_HOSTS should include all domains that can access your site
+# ALLOWED_HOSTS configuration
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # CSRF protection for HTTPS domains
-CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host]
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8000'] 
 
 # Application definition
 
@@ -110,28 +116,26 @@ WSGI_APPLICATION = 'DjangoCommerce.wsgi.application'
 
 load_dotenv()
 
-
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgres://postgres:postgres123@localhost:5432/test_db',
-        conn_max_age=600
-    )
-}
-
-# For local testing override
-if os.getenv('DJANGO_DEVELOPMENT'):
-    DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'djangocommerce'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres123'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
+        'OPTIONS': {
+            'connect_timeout': 5,  # 5 second timeout
+        },
     }
 }
-    
+
+#ATABASES = {
+  # 'default': dj_database_url.config(
+  #     default='postgres://postgres:postgres123@localhost:5432/test_db',
+    #   conn_max_age=600
+   #)
+#
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
@@ -177,6 +181,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
