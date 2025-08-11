@@ -102,17 +102,43 @@ class CartItem(models.Model):
         ]
 
     def clean(self):
+        """Validate the cart item before saving"""
+        if self.quantity < 1:
+            raise ValidationError({'quantity': 'Quantity must be at least 1'})
+            
         if self.quantity > self.product.stock:
             raise ValidationError(
-                f'Only {self.product.stock} items available'
+                {'quantity': f'Only {self.product.stock} items available'}
             )
+            
+        if self.price_at_addition is None:
+            self.price_at_addition = self.product.price
 
     def save(self, *args, **kwargs):
-        if not self.price_at_addition:
-            self.price_at_addition = self.product.price
+        """Handle existing items and validation"""
+        existing = CartItem.objects.filter(
+            cart=self.cart, 
+            product=self.product,
+            is_removed=False
+        ).exclude(pk=self.pk).first()
+        
+        if existing:
+            # Update existing item instead of creating new one
+            existing.quantity = self.quantity
+            existing.price_at_addition = self.price_at_addition
+            existing.is_removed = False
+            existing.removed_at = None
+            existing.save()
+            return existing
+            
         self.full_clean()
-        super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     @property
     def subtotal(self):
-        return (self.price_at_addition or self.product.price) * self.quantity
+        """Calculate line item total"""
+        price = self.price_at_addition if self.price_at_addition is not None else self.product.price
+        return Decimal(price) * self.quantity
+
+    def __str__(self):
+        return f"{self.quantity}x {self.product.name} (Cart: {self.cart.id})"
