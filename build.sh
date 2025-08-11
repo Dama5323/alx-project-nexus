@@ -5,7 +5,7 @@ set -o errexit
 pip install -r requirements.txt
 
 # 2. Run database migrations
-python manage.py migrate --settings=config.settings.production
+python manage.py migrate ##settings=config.settings.production
 
 # 3. Collect static files
-python manage.py collectstatic --noinput --settings=config.settings.production
+python manage.py collectstatic --noinput #-settings=config.settings.production
