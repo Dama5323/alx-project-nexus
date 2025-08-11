@@ -57,6 +57,12 @@ class CartViewSet(viewsets.ViewSet):
     Requires authentication via JWT token.
     """
     permission_classes = [IsAuthenticated]
+
+    def retrieve(self, request, pk=None):
+        """Get cart details - same as list since user has only one cart"""
+        cart = self.get_cart()
+        serializer = CartSerializer(cart)
+        return Response(serializer.data)
     
     def get_cart(self):
         """Get or create cart with select_related optimization"""
