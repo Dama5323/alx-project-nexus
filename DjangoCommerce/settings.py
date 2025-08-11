@@ -37,7 +37,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = False
 
 # ALLOWED_HOSTS configuration
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', 'djangocommerce-web.onrender.com'])
+
 
 # CSRF protection for HTTPS domains
 CSRF_TRUSTED_ORIGINS = [
@@ -120,24 +121,25 @@ WSGI_APPLICATION = 'DjangoCommerce.wsgi.application'
 
 load_dotenv()
 
+RENDER = env.bool('RENDER', default=False)
 
-if os.getenv("RENDER"):  # production on Render
-    DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME', default='djangocommerce'),
+        'USER': env('DB_USER', default='postgres'),
+        'PASSWORD': env('DB_PASSWORD', default='1234'),
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env('DB_PORT', default='5432'),
     }
+}
 
-else:  # local development
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME', 'mysite'),
-            'USER': os.getenv('DB_USER', 'postgres'),
-            'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-            'HOST': os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '5432'),
-        }
-    }
-
+# Override for Render
+if RENDER:
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        ssl_require=True
+    )
 
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-me')
@@ -285,6 +287,7 @@ SIMPLE_JWT = {
 }
 
 AUTH_USER_MODEL = 'accounts.User'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 LOGGING = {
@@ -324,3 +327,14 @@ else:
 
 # Cache content types for 24 hours
 CONTENT_TYPE_CACHE_TIMEOUT = 60 * 60 * 24
+
+
+# Security Settings
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
