@@ -42,7 +42,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'  # Match your project Python version
+        python-version: '3.10'
 
     - name: Install dependencies
       run: |
@@ -58,7 +58,6 @@ jobs:
         echo "PROJECT_ROOT=${MANAGEPY_DIR#./}" >> $GITHUB_ENV
         echo "SETTINGS_MODULE=$SETTINGS_MODULE" >> $GITHUB_ENV
         echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-
         echo "Project root: $MANAGEPY_DIR"
         echo "Settings module: $SETTINGS_MODULE"
 
@@ -78,15 +77,23 @@ jobs:
 
     - name: Apply migrations
       env:
-        DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
+        DB_NAME: test_db
+        DB_USER: postgres
+        DB_PASSWORD: postgres123
+        DB_HOST: localhost
+        DB_PORT: 5432
         DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
       run: |
         cd "$PROJECT_ROOT"
         python manage.py migrate --noinput
-
+    
     - name: Run tests
       env:
-        DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
+        DB_NAME: test_db
+        DB_USER: postgres
+        DB_PASSWORD: postgres123
+        DB_HOST: localhost
+        DB_PORT: 5432
         REDIS_URL: redis://localhost:6379/0
         DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
       run: |
