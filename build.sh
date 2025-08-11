@@ -2,7 +2,7 @@
 set -o errexit
 
 # 1. Install dependencies
-pip install -r requirements/production.txt
+pip install -r requirements.txt
 
 # 2. Run database migrations
 python manage.py migrate --settings=config.settings.production
