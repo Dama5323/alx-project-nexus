@@ -1,25 +1,55 @@
 services:
   - type: web
-    plan: free
+    plan: free  
     name: djangocommerce-web
-    env: python
+    runtime: python 
+    region: oregon 
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
-    startCommand: |
-      python manage.py migrate && \
-      gunicorn DjangoCommerce.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    startCommand: >-
+      python manage.py migrate --noinput && \
+      gunicorn DjangoCommerce.wsgi:application \
+        --bind 0.0.0.0:$PORT \
+        --workers $WEB_CONCURRENCY \
+        --timeout 120 \
+        --keep-alive 5
+    healthCheckPath: /health/
     envVars:
+      # Database
       - key: DATABASE_URL
         fromDatabase:
           name: djangocommerce-db
           property: connectionString
+      
+      # Django Core
       - key: SECRET_KEY
         generateValue: true
       - key: DJANGO_SETTINGS_MODULE
-        value: DjangoCommerce.settings
+        value: DjangoCommerce.settings.production
       - key: DEBUG
         value: "False"
+      
+      # Performance
       - key: WEB_CONCURRENCY
-        value: "2"
+        value: "4"
+      - key: GUNICORN_TIMEOUT
+        value: "120"
+      
+      # Security
+      - key: ALLOWED_HOSTS
+        value: "djangocommerce-web.onrender.com,*.onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://djangocommerce-web.onrender.com"
+      
+      # Static Files
+      - key: WHITENOISE_MANIFEST_STRICT
+        value: "False"
+      - key: DISABLE_COLLECTSTATIC
+        value: "0"  
+
+    # Static Files Configuration
+    staticFiles:
+      - path: /static/
+        destination: /opt/render/project/src/staticfiles/

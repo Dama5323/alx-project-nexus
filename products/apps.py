@@ -1,27 +1,28 @@
 from django.apps import AppConfig
+import os
 
 class ProductsConfig(AppConfig):
     name = 'products'
 
     def ready(self):
-        try:
-            from django.core.cache import cache
-            from django.core.cache.backends.base import InvalidCacheBackendError
-            from django.db.utils import OperationalError, ProgrammingError
+        # Skip during management commands and tests
+        if (os.environ.get('RUN_MAIN') != 'true' and 
+            not os.environ.get('RUNNING_TESTS')):
+            self._initialize_content_types()
 
-            if not cache.get('jwt_content_types_cached'):
+    def _initialize_content_types(self):
+        """Delayed initialization after app registry is ready"""
+        from django.db.models.signals import post_migrate
+        from django.apps import apps
+        
+        def callback(sender, **kwargs):
+            try:
                 from django.contrib.contenttypes.models import ContentType
-                from django.apps import apps
-
-                try:
-                    ContentType.objects.get_for_models(
-                        apps.get_model('token_blacklist', 'BlacklistedToken'),
-                        apps.get_model('token_blacklist', 'OutstandingToken'),
-                    )
-                    cache.set('jwt_content_types_cached', True, timeout=None)
-                except (LookupError, OperationalError, ProgrammingError):
-                    # Tables might not exist yet
-                    pass
-        except (InvalidCacheBackendError, ConnectionError):
-            # Silently fail if cache isn't available
-            pass
+                ContentType.objects.get_for_models(
+                    apps.get_model('token_blacklist', 'BlacklistedToken'),
+                    apps.get_model('token_blacklist', 'OutstandingToken'),
+                )
+            except Exception as e:
+                pass
+                
+        post_migrate.connect(callback, sender=self)
