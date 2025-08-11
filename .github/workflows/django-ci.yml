@@ -96,6 +96,8 @@ jobs:
         DB_PORT: 5432
         REDIS_URL: redis://localhost:6379/0
         DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
+        PYTHONPATH: ${{ github.workspace }}
       run: |
-        cd "$PROJECT_ROOT"
-        python manage.py test --verbosity=2
+       cd "$PROJECT_ROOT"
+       python -c "import sys; print(sys.path)"  # Debug Python path
+       python manage.py test accounts.tests cart.tests products.tests orders.tests --verbosity=2
