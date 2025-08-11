@@ -1,10 +1,16 @@
-name: Pause Actions
-on: workflow_dispatch
+name: Django CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
 jobs:
-  pause:
+  test:
     runs-on: ubuntu-latest
-    steps:
-      - run: echo "Workflows paused"
+
     services:
       postgres:
         image: postgres:14
@@ -32,60 +38,52 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
-    
+        python-version: '3.10'  # Match your project Python version
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    
+
     - name: Find project structure
       id: project-config
       run: |
-        # Find manage.py and settings.py
         MANAGEPY_DIR=$(dirname $(find . -name manage.py -print -quit))
         SETTINGS_PATH=$(find . -name settings.py -not -path "*/tests/*" -print -quit)
-        
-        # Convert to Python module path
         SETTINGS_MODULE=$(echo ${SETTINGS_PATH#./} | sed 's/.py$//' | tr '/' '.')
-        
         echo "PROJECT_ROOT=${MANAGEPY_DIR#./}" >> $GITHUB_ENV
         echo "SETTINGS_MODULE=$SETTINGS_MODULE" >> $GITHUB_ENV
         echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-        
+
         echo "Project root: $MANAGEPY_DIR"
         echo "Settings module: $SETTINGS_MODULE"
-    
+
+    - name: Wait for Postgres to be ready
+      run: |
+        until pg_isready -h localhost -p 5432; do
+          echo "Waiting for Postgres..."
+          sleep 1
+        done
+
     - name: Reset test database
       env:
         PGPASSWORD: postgres123
       run: |
         psql -h localhost -U postgres -c "DROP DATABASE IF EXISTS test_db;"
         psql -h localhost -U postgres -c "CREATE DATABASE test_db;"
-    
-    - name: Apply core migrations first
+
+    - name: Apply migrations
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
         DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
       run: |
         cd "$PROJECT_ROOT"
-        python manage.py migrate contenttypes
-        python manage.py migrate auth
-        python manage.py migrate admin
-        python manage.py migrate sessions
-    
-    - name: Apply all migrations
-      env:
-        DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
-        DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
-      run: |
-        cd "$PROJECT_ROOT"
-        python manage.py migrate
-    
+        python manage.py migrate --noinput
+
     - name: Run tests
       env:
         DATABASE_URL: postgres://postgres:postgres123@localhost:5432/test_db
@@ -93,4 +91,4 @@ jobs:
         DJANGO_SETTINGS_MODULE: ${{ env.SETTINGS_MODULE }}
       run: |
         cd "$PROJECT_ROOT"
-        python manage.py test
+        python manage.py test --verbosity=2

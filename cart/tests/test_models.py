@@ -2,6 +2,7 @@ from django.test import TestCase
 from products.models import Product
 from cart.models import Cart, CartItem
 from django.contrib.auth import get_user_model
+from decimal import Decimal
 
 User = get_user_model()
 
@@ -13,12 +14,15 @@ class CartItemModelTest(TestCase):
         # Create a cart for the user
         self.cart = Cart.objects.create(user=self.user)
 
-        # Create a product instance with a price
+        # Create a product instance with all required fields
         self.product = Product.objects.create(
             name='Test Product',
-            price=10.00,
+            description='Test product description',
+            price=Decimal('10.00'),
             stock=100,
-            # add other required fields for Product here
+            available=True,
+            # created_by is nullable and optional, so can skip or add if you want:
+            created_by=self.user,
         )
 
     def test_cart_item_subtotal(self):
