@@ -7,7 +7,9 @@ app_name = 'cart'
 
 # API Router Configuration
 router = DefaultRouter()
-router.register(r'', CartViewSet, basename='cart')
+#router.register(r'', CartViewSet, basename='cart')
+router.register(r'cart', CartViewSet, basename='cart')
+
 
 urlpatterns = [
     # Include all router-generated URLs first
