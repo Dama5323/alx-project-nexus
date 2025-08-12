@@ -12,6 +12,6 @@ class CartAPITest(APITestCase):
         self.cart = Cart.objects.create(user=self.user)
 
     def test_get_cart(self):
-        url = reverse('cart-detail', kwargs={'pk': self.cart.pk})  # adapt to your URL names
+        url = reverse('cart:cart-detail', kwargs={'pk': self.cart.pk})  # Added namespace
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
