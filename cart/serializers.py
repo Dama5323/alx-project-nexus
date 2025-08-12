@@ -2,6 +2,8 @@ from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
 from products.serializers import ProductSerializer
 from .models import Cart, CartItem
+from django.db.models import Sum
+
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
@@ -15,6 +17,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     def get_subtotal(self, obj):
         return obj.subtotal
 
+
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
     total_items = serializers.SerializerMethodField()
@@ -26,7 +29,7 @@ class CartSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
     def get_total_items(self, obj):
-        return obj.item_count
+        return obj.items.aggregate(total=Sum('quantity'))['total'] or 0
 
     def get_total_price(self, obj):
         return obj.total

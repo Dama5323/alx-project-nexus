@@ -28,7 +28,7 @@ def add_to_cart(request, product_id):
         product = get_object_or_404(Product, id=product_id)
         
         with transaction.atomic():
-            cart, created = Cart.objects.get_or_create(
+            cart, _ = Cart.objects.get_or_create(
                 user=request.user,
                 defaults={'is_active': True}
             )
@@ -41,7 +41,7 @@ def add_to_cart(request, product_id):
             
             if not created:
                 cart_item.quantity += quantity
-                cart_item.save()
+                cart_item.save(update_fields=['quantity'])
             
         messages.success(request, f"Added {product.name} to your cart")
         return redirect('products:list')
@@ -58,15 +58,9 @@ class CartViewSet(viewsets.ViewSet):
     """
     permission_classes = [IsAuthenticated]
 
-    def retrieve(self, request, pk=None):
-        """Get cart details - same as list since user has only one cart"""
-        cart = self.get_cart()
-        serializer = CartSerializer(cart)
-        return Response(serializer.data)
-    
     def get_cart(self):
         """Get or create cart with select_related optimization"""
-        cart, created = Cart.objects.get_or_create(
+        cart, _ = Cart.objects.get_or_create(
             user=self.request.user,
             defaults={'is_active': True}
         )
@@ -80,34 +74,16 @@ class CartViewSet(viewsets.ViewSet):
             401: "Unauthorized - Missing or invalid token"
         }
     )
-    
     def list(self, request):
         cart = self.get_cart()
         serializer = CartSerializer(cart)
         return Response(serializer.data)
-    
+
     @extend_schema(
-        summary="Add item to cart",
-        description="""
-        Adds a product to the cart or updates quantity if already present.
-        
-        Example:
-        ```json
-        {
-            "product_id": 42,
-            "quantity": 2
-          }
-        ```
-        """,
-        request=CartItemActionSerializer,
-        responses={
-            200: CartSerializer,
-            400: "Invalid product ID or quantity",
-            401: "Unauthorized"
-        }
+        summary="Get cart summary",
+        description="Returns a summary of the cart contents",
+        responses={200: CartSerializer}
     )
-
-
     @action(detail=False, methods=['get'], url_path='summary')
     def cart_summary(self, request):
         cart = self.get_cart()
@@ -214,5 +190,3 @@ class CartViewSet(viewsets.ViewSet):
             CartSerializer(cart).data,
             status=status.HTTP_200_OK
         )
-    
-

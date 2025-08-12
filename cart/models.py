@@ -4,7 +4,6 @@ from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from django.utils import timezone
-from django.contrib.auth import get_user_model
 
 def get_default_expiry():
     return timezone.now() + timezone.timedelta(days=30)
@@ -17,16 +16,8 @@ class Cart(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
-    expires_at = models.DateTimeField(
-        default=get_default_expiry
-    )
+    expires_at = models.DateTimeField(default=get_default_expiry)
     is_active = models.BooleanField(default=True, db_index=True)
-    # applied_coupon = models.ForeignKey(
-    #     'discounts.Coupon',
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.SET_NULL
-    # )
 
     class Meta:
         indexes = [
@@ -41,32 +32,32 @@ class Cart(models.Model):
 
     @property
     def total_items(self):
-        """Optimized count using aggregation"""
         return self.items.aggregate(
             total=models.Sum('quantity')
         )['total'] or 0
 
     @property
     def subtotal(self):
-        """Calculates total before discounts"""
         from django.db.models import Sum, F
         result = self.items.aggregate(
-            total=Sum(F('product__price') * F('quantity'))
+            total=Sum(F('price_at_addition') * F('quantity'))
         )['total'] or Decimal('0.00')
         return Decimal(result).quantize(Decimal('0.00'))
 
     @property
     def total(self):
-        """Final total after discounts"""
         subtotal = self.subtotal
         if hasattr(self, 'applied_coupon') and self.applied_coupon:
-            return max(Decimal('0.00'), 
-                     subtotal - self.applied_coupon.calculate_discount(subtotal))
+            return max(Decimal('0.00'),
+                       subtotal - self.applied_coupon.calculate_discount(subtotal))
         return subtotal
 
     def clear(self):
-        """Efficiently clears all items"""
         self.items.all().delete()
+
+    def __str__(self):
+        return f"Cart for {self.user}"
+
 
 class CartItem(models.Model):
     cart = models.ForeignKey(
@@ -102,43 +93,48 @@ class CartItem(models.Model):
         ]
 
     def clean(self):
-        """Validate the cart item before saving"""
         if self.quantity < 1:
             raise ValidationError({'quantity': 'Quantity must be at least 1'})
-            
         if self.quantity > self.product.stock:
-            raise ValidationError(
-                {'quantity': f'Only {self.product.stock} items available'}
-            )
-            
+            raise ValidationError({'quantity': f'Only {self.product.stock} items available'})
         if self.price_at_addition is None:
             self.price_at_addition = self.product.price
 
     def save(self, *args, **kwargs):
-        """Handle existing items and validation"""
         existing = CartItem.objects.filter(
-            cart=self.cart, 
+            cart=self.cart,
             product=self.product,
             is_removed=False
         ).exclude(pk=self.pk).first()
-        
+
         if existing:
-            # Update existing item instead of creating new one
             existing.quantity = self.quantity
             existing.price_at_addition = self.price_at_addition
             existing.is_removed = False
             existing.removed_at = None
             existing.save()
             return existing
-            
+
         self.full_clean()
         return super().save(*args, **kwargs)
 
     @property
     def subtotal(self):
-        """Calculate line item total"""
-        price = self.price_at_addition if self.price_at_addition is not None else self.product.price
-        return Decimal(price) * self.quantity
+        price = self.price_at_addition or self.product.price
+        return Decimal(price * self.quantity).quantize(Decimal('0.00'))
+
+    @property
+    def total(self):
+        # Apply discounts here if needed
+        return self.subtotal
+
+    def increase_quantity(self, amount):
+        self.quantity += amount
+        self.save(update_fields=['quantity'])
+
+    def decrease_quantity(self, amount):
+        self.quantity = max(1, self.quantity - amount)
+        self.save(update_fields=['quantity'])
 
     def __str__(self):
         return f"{self.quantity}x {self.product.name} (Cart: {self.cart.id})"
