@@ -82,3 +82,5 @@ class CartItemModelTest(TestCase):
         )
         self.assertIn(str(self.product.name), str(item))
         self.assertIn(str(self.cart.id), str(item))
+
+    
