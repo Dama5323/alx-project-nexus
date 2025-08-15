@@ -51,142 +51,108 @@ def add_to_cart(request, product_id):
 
 
 class CartViewSet(viewsets.ViewSet):
-    """
-    API endpoints for shopping cart operations.
-    
-    Requires authentication via JWT token.
-    """
     permission_classes = [IsAuthenticated]
 
     def get_cart(self):
-        """Get or create cart with select_related optimization"""
-        cart, _ = Cart.objects.get_or_create(
-            user=self.request.user,
-            defaults={'is_active': True}
-        )
+        cart, _ = Cart.objects.get_or_create(user=self.request.user)
         return cart
 
-    @extend_schema(
-        summary="Get cart contents",
-        description="Retrieves all items in the authenticated user's cart",
-        responses={
-            200: CartSerializer,
-            401: "Unauthorized - Missing or invalid token"
-        }
-    )
     def list(self, request):
-        cart = self.get_cart()
-        serializer = CartSerializer(cart)
-        return Response(serializer.data)
-
-    @extend_schema(
-        summary="Get cart summary",
-        description="Returns a summary of the cart contents",
-        responses={200: CartSerializer}
-    )
-    @action(detail=False, methods=['get'], url_path='summary')
-    def cart_summary(self, request):
+        """Handles GET /cart/summary/"""
         cart = self.get_cart()
         serializer = CartSerializer(cart)
         return Response(serializer.data)
 
     @extend_schema(
         request=CartItemActionSerializer,
-        responses=CartSerializer,
         examples=[
             OpenApiExample(
-                'Example Request',
+                'Example request',
                 value={'product_id': 1, 'quantity': 2},
                 request_only=True
             )
-        ],
-        description="Add item to cart with quantity validation"
+        ]
     )
     @action(detail=False, methods=['post'], url_path='add-item')
     def add_item(self, request):
         serializer = CartItemActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        with transaction.atomic():
-            cart = self.get_cart()
-            product_id = serializer.validated_data['product_id']
-            quantity = serializer.validated_data['quantity']
+        try:
+            product = Product.objects.get(id=serializer.validated_data['product_id'])
+            quantity = serializer.validated_data.get('quantity', 1)
             
-            try:
-                cart_item = CartItem.objects.select_for_update().get(
+            with transaction.atomic():
+                cart = self.get_cart()
+                cart_item, created = CartItem.objects.get_or_create(
                     cart=cart,
-                    product_id=product_id
+                    product=product,
+                    defaults={'quantity': quantity}
                 )
-                cart_item.increase_quantity(quantity)
-            except CartItem.DoesNotExist:
-                try:
-                    CartItem.objects.create(
-                        cart=cart,
-                        product_id=product_id,
-                        quantity=quantity
-                    )
-                except Exception as e:
-                    return Response(
-                        {'detail': str(e)},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            except ValidationError as e:
-                return Response(
-                    {'detail': str(e)},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
+                
+                if not created:
+                    cart_item.quantity += quantity
+                    cart_item.save()
+                
+                serializer = CartSerializer(cart)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+                
+        except Product.DoesNotExist:
             return Response(
-                CartSerializer(cart).data,
-                status=status.HTTP_200_OK
+                {'error': 'Product not found'}, 
+                status=status.HTTP_404_NOT_FOUND
             )
 
     @extend_schema(
         request=CartItemActionSerializer,
-        responses=CartSerializer,
-        description="Remove item from cart or reduce quantity"
+        examples=[
+            OpenApiExample(
+                'Example request',
+                value={'product_id': 1, 'quantity': 1},
+                request_only=True
+            )
+        ]
     )
     @action(detail=False, methods=['post'], url_path='remove-item')
     def remove_item(self, request):
         serializer = CartItemActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        with transaction.atomic():
-            cart = self.get_cart()
-            product_id = serializer.validated_data['product_id']
-            quantity = serializer.validated_data['quantity']
+        try:
+            product = Product.objects.get(id=serializer.validated_data['product_id'])
+            quantity = serializer.validated_data.get('quantity', 1)
             
-            try:
-                cart_item = CartItem.objects.select_for_update().get(
-                    cart=cart,
-                    product_id=product_id
-                )
-                
-                if cart_item.quantity <= quantity:
-                    cart_item.delete()
-                else:
-                    cart_item.decrease_quantity(quantity)
+            with transaction.atomic():
+                cart = self.get_cart()
+                try:
+                    cart_item = CartItem.objects.get(cart=cart, product=product)
+                    if cart_item.quantity > quantity:
+                        cart_item.quantity -= quantity
+                        cart_item.save()
+                    else:
+                        cart_item.delete()
+                        
+                    serializer = CartSerializer(cart)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
                     
-            except (CartItem.DoesNotExist, ValidationError) as e:
-                return Response(
-                    {'detail': str(e)},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
+                except CartItem.DoesNotExist:
+                    return Response(
+                        {'error': 'Item not in cart'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                    
+        except Product.DoesNotExist:
             return Response(
-                CartSerializer(cart).data,
-                status=status.HTTP_200_OK
+                {'error': 'Product not found'}, 
+                status=status.HTTP_404_NOT_FOUND
             )
 
-    @extend_schema(
-        responses=CartSerializer,
-        description="Completely empty the cart"
-    )
     @action(detail=False, methods=['delete'], url_path='clear')
     def clear_cart(self, request):
-        cart = self.get_cart()
-        cart.clear()
-        return Response(
-            CartSerializer(cart).data,
-            status=status.HTTP_200_OK
-        )
+        with transaction.atomic():
+            cart = self.get_cart()
+            cart.items.all().delete()
+            return Response(
+                {'message': 'Cart cleared successfully', 'items': []},
+                status=status.HTTP_200_OK
+            )

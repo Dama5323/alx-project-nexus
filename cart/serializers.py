@@ -3,6 +3,7 @@ from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
 from products.serializers import ProductSerializer
 from .models import Cart, CartItem
 from django.db.models import Sum
+from products.models import Product
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -48,16 +49,10 @@ class CartSerializer(serializers.ModelSerializer):
     ]
 )
 class CartItemActionSerializer(serializers.Serializer):
-    product_id = serializers.IntegerField(
-        help_text="ID of the product to add/remove"
-    )
-    quantity = serializers.IntegerField(
-        help_text="Number of items to add/remove",
-        min_value=1
-    )
+    product_id = serializers.IntegerField(required=True)
+    quantity = serializers.IntegerField(default=1, min_value=1)
 
     def validate_product_id(self, value):
-        from products.models import Product
-        if not Product.objects.filter(pk=value).exists():
+        if not Product.objects.filter(id=value).exists():
             raise serializers.ValidationError("Product does not exist")
         return value
