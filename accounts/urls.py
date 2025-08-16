@@ -1,16 +1,22 @@
-from django.urls import path
+from django.urls import path, include
 from django.contrib.auth.views import LogoutView
+from django.views.generic.base import RedirectView  
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import (
+from rest_framework.routers import DefaultRouter
+from accounts.views import (
     login_view,
     register_view,
     logout_view,
-    CustomTokenObtainPairView,
-    RegisterAPIView,
-    ProfileAPIView,
-    api_root,
-    UserDetailView,
+    AuthTokenObtainPairView,
+    AuthRegisterAPIView,
+    AccountDetailAPIView,
+    AccountProfileAPIView,
+    AccountViewSet,
+    api_root
 )
+
+router = DefaultRouter()
+router.register(r'accounts', AccountViewSet, basename='accounts')
 
 urlpatterns = [
     # Template Views (for web browser access)
@@ -20,9 +26,23 @@ urlpatterns = [
     
     # API Views (for programmatic access)
     path('', api_root, name='api-root'),
-    path('auth/register/', RegisterAPIView.as_view(), name='auth-register'),
-    path('auth/token/', CustomTokenObtainPairView.as_view(), name='auth-token'),
+    
+    # Authentication Endpoints
+    path('auth/register/', AuthRegisterAPIView.as_view(), name='auth-register'),
+    path('auth/token/', AuthTokenObtainPairView.as_view(), name='auth-token'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='auth-token-refresh'),
-    path('users/me/', UserDetailView.as_view(), name='user-detail'),
-    path('users/profile/', ProfileAPIView.as_view(), name='user-profile'),
+    
+    # Account Endpoints (consistent naming)
+    path('accounts/me/', AccountDetailAPIView.as_view(), name='account-detail'),
+    path('accounts/profile/', AccountProfileAPIView.as_view(), name='account-profile'),
+    
+    # Include DRF router URLs
+    path('api/', include(router.urls)),
+    
+    # Redirect for old /users/ endpoints (temporary)
+    path('users/', include([
+        path('', RedirectView.as_view(url='/accounts/'), name='users-redirect'),
+        path('me/', RedirectView.as_view(url='/accounts/me/'), name='users-me-redirect'),
+        path('profile/', RedirectView.as_view(url='/accounts/profile/'), name='users-profile-redirect'),
+    ])),
 ]

@@ -20,20 +20,22 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 
 class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True, read_only=True)
-    total_items = serializers.SerializerMethodField()
-    total_price = serializers.SerializerMethodField()
-
+    items = serializers.SerializerMethodField()
+    
     class Meta:
         model = Cart
-        fields = ['id', 'items', 'total_items', 'total_price', 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at']
-
-    def get_total_items(self, obj):
-        return obj.items.aggregate(total=Sum('quantity'))['total'] or 0
-
-    def get_total_price(self, obj):
-        return obj.total
+        fields = ['id', 'user', 'created_at', 'updated_at', 'items']
+    
+    def get_items(self, obj):
+        items = []
+        for item in obj.items.all():
+            items.append({
+                'id': item.id,
+                'product': item.product.id,
+                'quantity': item.quantity,
+                'price': str(item.price_at_addition or item.product.price)
+            })
+        return items
 
 @extend_schema_serializer(
     examples=[

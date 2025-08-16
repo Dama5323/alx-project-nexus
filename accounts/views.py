@@ -3,13 +3,16 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import RegisterSerializer, UserSerializer, CustomTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 # Template Views
 def login_view(request):
@@ -29,18 +32,17 @@ def register_view(request):
     return render(request, 'accounts/register.html')
 
 # API Views
-# accounts/views.py
-class RegisterAPIView(APIView):  # Changed from RegisterView to RegisterAPIView
+class AuthRegisterAPIView(APIView):
     permission_classes = [AllowAny]
     
     @swagger_auto_schema(
-        operation_description="Register a new user account",
+        operation_description="Register a new account",
         request_body=RegisterSerializer,
         responses={
-            201: openapi.Response("User created", UserSerializer),
+            201: openapi.Response("Account created", UserSerializer),
             400: "Invalid data"
         },
-        tags=['Authentication']
+        tags=['Accounts']
     )
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -50,13 +52,12 @@ class RegisterAPIView(APIView):  # Changed from RegisterView to RegisterAPIView
             UserSerializer(user).data,
             status=status.HTTP_201_CREATED
         )
-        
 
-class CustomTokenObtainPairView(TokenObtainPairView):
+class AuthTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     
     @swagger_auto_schema(
-        operation_description="Obtain JWT token pair",
+        operation_description="Obtain JWT token pair for account",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             required=['email', 'password'],
@@ -78,57 +79,67 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             ),
             401: "Invalid credentials"
         },
-        tags=['Authentication']
+        tags=['Accounts']
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
-class UserDetailView(APIView):
+class AccountViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing user accounts.
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(tags=['Accounts'])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+class AccountDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
     @swagger_auto_schema(
-        operation_description="Get current user details",
+        operation_description="Get current account details",
         responses={
             200: UserSerializer,
             401: "Unauthorized"
         },
-        tags=['Users']
+        tags=['Accounts']
     )
     def get(self, request):
         return Response(UserSerializer(request.user).data)
-    
-# accounts/views.py
-class ProfileAPIView(APIView):
+
+class AccountProfileAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
     @swagger_auto_schema(
-        operation_description="Get or update user profile",
+        operation_description="Get or update account profile",
         responses={
             200: UserSerializer,
             401: "Unauthorized"
         },
-        tags=['Users']
+        tags=['Accounts']
     )
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
     
     @swagger_auto_schema(
-        operation_description="Update user profile",
+        operation_description="Update account profile",
         request_body=UserSerializer,
         responses={
             200: UserSerializer,
             400: "Bad request",
             401: "Unauthorized"
         },
-        tags=['Users']
+        tags=['Accounts']
     )
     def put(self, request):
         serializer = UserSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-    
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -136,5 +147,5 @@ def api_root(request, format=None):
         'register': reverse('auth-register', request=request, format=format),
         'token-obtain': reverse('auth-token', request=request, format=format),
         'token-refresh': reverse('auth-token-refresh', request=request, format=format),
-        'user-detail': reverse('user-detail', request=request, format=format),
+        'account-detail': reverse('account-detail', request=request, format=format),
     })

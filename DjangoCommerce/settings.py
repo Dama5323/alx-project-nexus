@@ -212,14 +212,18 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-
-    'DEFAULT_ROUTER_TRAILING_SLASH': False,  # Disable trailing slashes in URLs
 }
 
+APPEND_SLASH = False
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'E-Commerce API Documentation',
+    'TITLE': 'DJACommerce API',
     'DESCRIPTION': """
     ## API Usage Guide
+    
+    ### Accounts Endpoints
+    - **Register**: POST `/auth/register/`
+    - **Login**: POST `/auth/token/`
+    - **Profile**: GET/PUT `/accounts/profile/`
     
     ### Cart Endpoints
     - **Add Item**: POST `/api/cart/add-item/`
@@ -239,6 +243,11 @@ SPECTACULAR_SETTINGS = {
         'displayOperationId': True,
     },
     'SCHEMA_PATH_PREFIX': r'/api/',
+    'PREPROCESSING_HOOKS': [
+        'accounts.schema.rename_users_to_accounts'
+    ],
+    'TAGS_SORTER': 'alpha',  # Optional: sorts tags alphabetically
+    'SCHEMA_COERCE_PATH_PK_SUFFIX': True,  # Optional: cleans up URL paths
 }
 
 # Swagger Settings

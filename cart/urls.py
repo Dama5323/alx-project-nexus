@@ -1,23 +1,17 @@
-from django.urls import path
-from .views import CartViewSet
-from drf_spectacular.views import SpectacularSwaggerView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from . import views  
 
-app_name = 'cart'
+app_name = 'cart' 
+
+router = DefaultRouter()
+router.register(r'cart', views.CartViewSet, basename='cart')  
 
 urlpatterns = [
-    path('add-item', CartViewSet.as_view({'post': 'add_item'}), name='cart-add-item'),
-    path('remove-item', CartViewSet.as_view({'post': 'remove_item'}), name='remove-item'),
-    path('clear', CartViewSet.as_view({'delete': 'clear_cart'}), name='clear'),
-    path('summary', CartViewSet.as_view({'get': 'list'}), name='summary'),
-
-    # Swagger documentation
-    path(
-        'api/docs/cart/',
-        SpectacularSwaggerView.as_view(
-            url_name='schema',
-            template_name='swagger_ui.html',
-            title="Cart API Documentation"
-        ),
-        name='cart-docs'
-    ),
+    # Web Interface URLs
+    path('', views.cart_detail, name='detail'), 
+    path('add/<int:product_id>/', views.add_to_cart, name='add'),
+    
+    # API Endpoints (via ViewSet)
+    path('', include(router.urls)),
 ]
